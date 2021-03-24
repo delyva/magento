@@ -29,3 +29,5 @@ From your Magento admin panel, follow this route: `Stores > Settings > Configura
 
 ### Setting default Weight Unit to Kilograms instead of Pounds
 From your Magento admin panel, follow this route: `Stores > Settings > Configuration > General > Locale Options > Weight Unit` [(screenshot)](https://prnt.sc/10tzbq7)
+
+With this settings, user should be able to get Delyvax Shipping rates and carriers dynamically on checkout. [screenshot](https://prnt.sc/10tzewv)
