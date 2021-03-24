@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="carriers" translate="label" type="text" sortOrder="320" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="delyvax_shipment" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>DelyvaX Dynamic Shipping rates</label>
+                <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Enable dynamic shipping rate on checkout</comment>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Title</label>
+                </field>
+
+                <group id="credentials" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>DelyvaX Account Credentials</label>
+                    <field id="delyvax_company_id" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Company ID</label>
+                        <comment>DelyvaX Company ID (e.g. e44c7375-c4dc-47e9-8b24-70a28e024a83)</comment>
+                    </field>
+                    <field id="delyvax_company_code" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Company Code</label>
+                        <comment>DelyvaX Company Code (e.g. matdespatch-my)</comment>
+                    </field>
+                    <field id="delyvax_company_name" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Company Name</label>
+                        <comment>DelyvaX Company Name (e.g. Matdespatch)</comment>
+                    </field>
+                    <field id="delyvax_user_id" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>User ID</label>
+                        <comment>DelyvaX User ID (e.g. d50d1780-aabc-11ea-8557-fb3ba8b0c74b)</comment>
+                    </field>
+                    <field id="delyvax_customer_id" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Customer ID</label>
+                        <comment>DelyvaX Customer ID (e.g. 323)</comment>
+                    </field>
+                    <field id="delyvax_api_token" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>API token</label>
+                        <comment>DelyvaX API Token (e.g. d50d1780-aabc-11ea-8557-fb3ba8b0c74b)</comment>
+                    </field>
+                    <field id="delyvax_api_webhook_enable" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>API Enable Webhook</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Enable API Webhook for status tracking updates</comment>
+                    </field>
+                </group>
+
+                <group id="settings" translate="label" type="text" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>DelyvaX Settings</label>
+                    <field id="create_shipment_on_paid" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Auto Create Shipment on Payment Complete</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Create shipment on successful payment by customer</comment>
+                    </field>
+                    <field id="create_shipment_on_confirm" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Auto Create Shipment on Preparing</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Create shipment on order status = "preparing" by Store/Merchant/Vendor</comment>
+                    </field>
+                    <field id="change_order_status" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Auto Change Order Status</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Create webhook on DelyvaX customer profile pointing to your store url e.g. https://kedai.matdespatch.com</comment>
+                    </field>
+                    <field id="delyvax_processing_days" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Processing days</label>
+                        <comment>Number of processing days. e.g. 0 - same day ship out; 1 - next day ship out.</comment>
+                    </field>
+                    <field id="delyvax_processing_hours" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Processing hours</label>
+                        <comment>Number of processing hours. e.g. 1 - ship in 1 hour; 4 - ship in 4 hours.</comment>
+                    </field>
+                    <field id="delyvax_item_type" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Default Order - Item type</label>
+                        <comment>Default order - package item type. e.g. DOCUMENT / PARCEL / FOOD / PACKAGE.</comment>
+                    </field>
+                    <field id="delyvax_task_item_type" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Default Task - Item type</label>
+                        <comment>Default task - package item type. e.g. DOCUMENT / PARCEL / FOOD / PACKAGE.</comment>
+                    </field>
+                    <field id="delyvax_split_tasks" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Fulfilment by vendors</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Create tasks and assign to vendors by ext id type and ext id</comment>
+                    </field>
+                    <field id="delyvax_ext_id_type" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Personnel External ID Type</label>
+                        <comment>Personnel External ID Type. e.g. dokan</comment>
+                    </field>
+                </group>
+
+                <group id="shipping_rate_adjustment" translate="label" type="text" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>DelyvaX Shipping Rate Adjustment</label>
+                    <comment>Formula, shipping cost = shipping price + % rate + flat rate</comment>
+                    <field id="delyvax_rate_adjustment_percentage" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Percentage Rate %</label>
+                    </field>
+                    <field id="delyvax_rate_adjustment_flat" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Flat Rate</label>
+                    </field>
+                </group>
+
+                <field id="sallowspecific" translate="label" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Ship to Applicable Countries</label>
+                    <frontend_class>shipping-applicable-country</frontend_class>
+                    <source_model>Magento\Shipping\Model\Config\Source\Allspecificcountries</source_model>
+                </field>
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Ship to Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                    <can_be_empty>1</can_be_empty>
+                </field>
+                <field id="showmethod" translate="label" type="select" sortOrder="225" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Show Method if Not Applicable</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <frontend_class>shipping-skip-hide</frontend_class>
+                </field>
+                <field id="specificerrmsg" translate="label" type="textarea" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Displayed Error Message</label>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                </field>
+
+            </group>
+        </section>
+    </system>
+</config>

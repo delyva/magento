@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <carriers>
+            <delyvax_shipment>
+                <active>1</active>
+                <sallowspecific>0</sallowspecific>
+                <model>Delyvax\Shipment\Model\Carrier\Shipping</model>
+                <price>0.00</price>
+                <title>DelyvaX Shipment</title>
+                <specificerrmsg>Sorry, something went wrong with the shipping rates. If the problem persists, please contact us!</specificerrmsg>
+                <handling_type>F</handling_type>
+                <delyvax_company_name></delyvax_company_name>
+            </delyvax_shipment>
+        </carriers>
+    </default>
+</config>
