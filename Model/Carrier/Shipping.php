@@ -118,10 +118,16 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
                     $ra_percentage = $delyvaxConfig['delyvax_rate_adjustment_percentage'] ?? 1;
                     $percentRate = $ra_percentage / 100 * $shipper['price']['amount'];
                     $flatRate = $delyvaxConfig['delyvax_rate_adjustment_flat'] ?? 0;
+                    if ($delyvaxConfig['delyvax_rate_adjustment_type'] == \Delyvax\Shipment\Model\Config\Source\RateAdjustmentType::DISCOUNT) {
+                        $cost = round($shipper['price']['amount'] - $percentRate - $flatRate, 2);
+                    } else {
+                        $cost = round($shipper['price']['amount'] + $percentRate + $flatRate, 2);
+                    }
+                    if ($cost < 0) { $cost = 0.00; }
                     $rate = [
                         'id' => $shipper['service']['code'],
                         'label' => $shipper['service']['name'],
-                        'cost' => round($shipper['price']['amount'] + $percentRate + $flatRate, 2),
+                        'cost' => $cost,
                         'taxes' => 'false',
                         'calc_tax' => 'per_order',
                         'meta_data' => array(

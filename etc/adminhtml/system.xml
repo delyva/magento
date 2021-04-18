@@ -53,7 +53,7 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Create shipment on successful payment by customer</comment>
                     </field>
-                    <field id="create_shipment_on_confirm" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <!--<field id="create_shipment_on_confirm" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                         <label>Auto Create Shipment on Preparing</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Create shipment on order status = "preparing" by Store/Merchant/Vendor</comment>
@@ -62,7 +62,7 @@
                         <label>Auto Change Order Status</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Create webhook on DelyvaX customer profile pointing to your store url e.g. https://kedai.matdespatch.com</comment>
-                    </field>
+                    </field>-->
                     <field id="delyvax_processing_days" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Processing days</label>
                         <comment>Number of processing days. e.g. 0 - same day ship out; 1 - next day ship out.</comment>
@@ -94,7 +94,7 @@
 
                 <group id="shipping_rate_adjustment" translate="label" type="text" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>DelyvaX Shipping Rate Adjustment</label>
-                    <comment>Formula, shipping cost = shipping price + % rate + flat rate</comment>
+                    <comment>Shipping Cost Formula (Markup) = shipping price + % rate + flat rate</comment>
                     <field id="delyvax_rate_adjustment_percentage" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Percentage Rate %</label>
                     </field>
