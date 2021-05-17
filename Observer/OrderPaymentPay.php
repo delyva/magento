@@ -25,12 +25,18 @@ class OrderPaymentPay implements ObserverInterface
         $this->_logger = $logger;
     }
 
+    /**
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $delyvaxConfig = $this->_delyvaxHelper->getDelyvaxConfig();
-        if($delyvaxConfig['create_shipment_on_paid']) {
-            $order = $observer->getEvent()->getInvoice()->getOrder();
-            $this->_delyvaxHelper->processDelyvaxOrderIfDraft($order, true);
+        $order = $observer->getEvent()->getInvoice()->getOrder();
+        // check if order shipping method is delyvax
+        if (strpos($order->getShippingMethod(), DelyvaxHelper::DELYVAX_SHIPMENT_CODE) !== false) {
+            $delyvaxConfig = $this->_delyvaxHelper->getDelyvaxConfig();
+            if($delyvaxConfig['create_shipment_on_paid'] && $order->canShip()) {
+                $this->_delyvaxHelper->processDelyvaxOrderIfDraft($order, true);
+            }
         }
     }
 

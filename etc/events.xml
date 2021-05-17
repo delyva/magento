@@ -9,4 +9,7 @@
     <event name="sales_order_shipment_save_after">
         <observer name="delyvax_order_shipment_save_event" instance="Delyvax\Shipment\Observer\OrderShipmentSave" />
     </event>
+    <event name="admin_system_config_changed_section_carriers">
+        <observer name="custom_admin_system_config_changed_section_carriers" instance="Delyvax\Shipment\Observer\CarriersConfigSave"/>
+    </event>
 </config>

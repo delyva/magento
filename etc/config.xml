@@ -10,7 +10,8 @@
                 <title>DelyvaX Shipment</title>
                 <specificerrmsg>Sorry, something went wrong with the shipping rates. If the problem persists, please contact us!</specificerrmsg>
                 <handling_type>F</handling_type>
-                <delyvax_company_name></delyvax_company_name>
+                <is_online>1</is_online>
+                <max_package_weight>1000</max_package_weight>
             </delyvax_shipment>
         </carriers>
     </default>

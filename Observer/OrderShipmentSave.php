@@ -25,10 +25,18 @@ class OrderShipmentSave implements ObserverInterface
         $this->_logger = $logger;
     }
 
+    /**
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $order = $observer->getEvent()->getShipment()->getOrder();
-        $this->_delyvaxHelper->processDelyvaxOrderIfDraft($order);
+        $shipment = $observer->getEvent()->getShipment();
+        $order = $shipment->getOrder();
+        // check if order shipping method is delyvax
+        if (strpos($order->getShippingMethod(), DelyvaxHelper::DELYVAX_SHIPMENT_CODE) !== false) {
+            $this->_delyvaxHelper->processDelyvaxOrderIfDraft($order);
+            $this->_delyvaxHelper->setDelyvaxShipmentTrackingInfo($shipment, $order);
+        }
     }
 
 }

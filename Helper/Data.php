@@ -3,15 +3,18 @@
 namespace Delyvax\Shipment\Helper;
 
 use Exception;
+use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\HTTP\Client\CurlFactory;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Sales\Model\OrderRepository;
 use Magento\Store\Model\Information as StoreInformation;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Directory\Model\CountryFactory;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\ResourceModel\Order as ResourceOrder;
@@ -19,6 +22,9 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Model\Convert\Order as ConvertOrder;
 use Magento\Shipping\Model\ShipmentNotifier;
+use Magento\Sales\Model\Order\Shipment\TrackFactory;
+use Magento\Catalog\Model\ProductRepository;
+use Magento\Quote\Model\Quote\Address\RateRequest;
 
 
 class Data extends AbstractHelper
@@ -31,6 +37,7 @@ class Data extends AbstractHelper
     const DELYVAX_RATE_PATH = 'carriers/delyvax_shipment/shipping_rate_adjustment/';
 
     const DELYVAX_API_ENDPOINT = 'https://api.delyva.app';
+    const DELYVAX_CDN_URL = 'https://cdn.delyva.app/';
 
     const STATUS = 'status';
     const STATUS_CODE = 'status_code';
@@ -70,6 +77,11 @@ class Data extends AbstractHelper
     protected $_scopeConfig;
 
     /**
+     *  @var WriterInterface
+     */
+    protected $_configWriter;
+
+    /**
      * CountryFactory
      */
     protected $_countryFactory;
@@ -90,6 +102,16 @@ class Data extends AbstractHelper
     private $_shipmentNotifier;
 
     /**
+     * @var TrackFactory
+     */
+    private $_trackFactory;
+
+    /**
+     * @var ProductRepository
+     */
+    protected $_productRepository;
+    
+    /**
      * Data constructor.
      * @param Context $context
      * @param CurlFactory $clientFactory
@@ -98,10 +120,13 @@ class Data extends AbstractHelper
      * @param StoreInformation $storeInformation
      * @param StoreManagerInterface $storeManager
      * @param ScopeConfigInterface $scopeConfig
+     * @param WriterInterface $configWriter
      * @param CountryFactory $countryFactory
      * @param ResourceOrder $resourceOrder
      * @param ConvertOrder $convertOrder
      * @param ShipmentNotifier $shipmentNotifier
+     * @param TrackFactory $trackFactory
+     * @param ProductRepository $productRepository
      */
     public function __construct(
         Context $context,
@@ -111,10 +136,13 @@ class Data extends AbstractHelper
         StoreInformation $storeInformation,
         StoreManagerInterface $storeManager,
         ScopeConfigInterface $scopeConfig,
+        WriterInterface $configWriter,
         CountryFactory $countryFactory,
         ResourceOrder $resourceOrder,
         ConvertOrder $convertOrder,
-        ShipmentNotifier $shipmentNotifier
+        ShipmentNotifier $shipmentNotifier,
+        TrackFactory $trackFactory,
+        ProductRepository $productRepository
     )
     {
         parent::__construct($context);
@@ -124,10 +152,13 @@ class Data extends AbstractHelper
         $this->_storeInformation = $storeInformation;
         $this->_storeManager = $storeManager;
         $this->_scopeConfig = $scopeConfig;
+        $this->_configWriter = $configWriter;
         $this->_countryFactory = $countryFactory;
         $this->_resourceOrder = $resourceOrder;
         $this->_convertOrder = $convertOrder;
         $this->_shipmentNotifier = $shipmentNotifier;
+        $this->_trackFactory = $trackFactory;
+        $this->_productRepository = $productRepository;
     }
 
     /**
@@ -148,31 +179,7 @@ class Data extends AbstractHelper
             "weight" => $weight,
             "itemType" => $delyvaxConfig['delyvax_item_type']
         ];
-
-        $accessToken = $delyvaxConfig['delyvax_api_token'];
-
-        /**@var $curl \Magento\Framework\HTTP\Client\Curl */
-        $curl = $this->clientFactory->create();
-        $curl->addHeader("Authorization", "Bearer $accessToken");
-        $curl->addHeader("content-type", "application/json");
-        $curl->addHeader("X-Delyvax-Access-Token", $delyvaxConfig['delyvax_api_token']);
-        $curl->post($apiUrl, json_encode($postRequestArr, JSON_UNESCAPED_SLASHES));
-
-        $this->_logger->debug(var_export($postRequestArr, true));
-        $this->_logger->debug(var_export($curl->getBody(), true));
-
-        if ($curl->getStatus() == 200) {
-            return [
-                self::STATUS => true,
-                self::STATUS_CODE => $curl->getStatus(),
-                self::RESPONSE => json_decode($curl->getBody(), true)
-            ];
-        } else {
-            return [
-                self::STATUS => false,
-                self::STATUS_CODE => $curl->getStatus()
-            ];
-        }
+        return $this->makeRequest($apiUrl, $postRequestArr, 'getPriceQuote');
     }
 
     /**
@@ -192,13 +199,31 @@ class Data extends AbstractHelper
             'delyvax_ext_id_type' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_ext_id_type'),
             'delyvax_item_type' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_item_type'),
             'create_shipment_on_paid' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'create_shipment_on_paid'),
+            'change_order_status' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'change_order_status'),
             'delyvax_processing_days' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_processing_days'),
             'delyvax_processing_hours' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_processing_hours'),
             'delyvax_split_tasks' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_split_tasks'),
             'delyvax_task_item_type' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_task_item_type'),
+            'delyvax_weight_consideration' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_weight_consideration'),
+            'delyvax_volumetric_weight_constant' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_volumetric_weight_constant'),
             'delyvax_rate_adjustment_flat' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_flat'),
             'delyvax_rate_adjustment_percentage' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_percentage'),
             'delyvax_rate_adjustment_type' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_type')
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function getDelyvaxWebhookConfig() : array
+    {
+//        $this->_configWriter->save(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_updated_id', '&&&', $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT, $scopeId = 0);
+        return [
+            'delyvax_api_webhook_enable' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_enable'),
+            'delyvax_api_webhook_order_created_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_created_id'),
+            'delyvax_api_webhook_order_failed_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_failed_id'),
+            'delyvax_api_webhook_order_updated_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_updated_id'),
+            'delyvax_api_webhook_order_tracking_update_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_tracking_update_id')
         ];
     }
 
@@ -218,6 +243,38 @@ class Data extends AbstractHelper
     }
 
     /**
+     * @param RateRequest $request
+     * @return int | float
+     */
+    public function calculateWeightBasedOnDelyvaxSettings(RateRequest $request)
+    {
+        $totalWeight = $request->getPackageWeight();
+        $delyvaxConfig = $this->getDelyvaxConfig();
+        if ($delyvaxConfig['delyvax_weight_consideration'] == 'ACTUAL') {
+            return $totalWeight;
+        } else {
+            $totalDimension = 0;
+            foreach ($request->getAllItems() as $item) {
+                $product = $this->_productRepository->getById($item->getProduct()->getId());
+                $totalDimension = $totalDimension + ($product->getLength() * $product->getWidth() * $product->getHeight());
+            }
+            $totalActualWeight = $totalWeight;
+            $volumetricConstant = $delyvaxConfig['delyvax_volumetric_weight_constant'];
+
+            //calculate volumetric weight
+            $totalVolumetricWeight = ($totalDimension > 0) ? $totalDimension / $volumetricConstant : $totalActualWeight;
+            if ($delyvaxConfig['delyvax_weight_consideration'] == 'VOL') {
+                return $totalVolumetricWeight;
+            } else {
+                $totalWeight = ($totalActualWeight > $totalVolumetricWeight) ? $totalActualWeight : $totalVolumetricWeight;
+                return $totalWeight;
+            }
+        }
+        // file_put_contents('var/log/request_allItems.json', '--------------------------\nrequest->getAllItems(): \n'.json_encode($arr, JSON_PRETTY_PRINT).PHP_EOL, FILE_APPEND);
+        
+    }
+
+    /**
      * @param Quote $quote
      * @param string $orderCurrencyCode
      * @return array
@@ -227,10 +284,9 @@ class Data extends AbstractHelper
         $inventories = array();
         $delyvaxConfig = $this->getDelyvaxConfig();
         foreach ($quote->getAllVisibleItems() as $item) {
-            // Skip if item type is Virtual/Downloadable, or item weight is less than or equal to 0
+            // Skip if item type is Virtual/Downloadable, (removed condition - or item weight is less than or equal to 0, that is $item->getWeight() <= 0
             if ($item->getProductType() == \Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE
-                || $item->getProductType() == \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL
-                || $item->getWeight() <= 0 ) {
+                || $item->getProductType() == \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL) {
                 continue;
             }
             $inventories[] = [
@@ -264,6 +320,7 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Adding 24 hours to Origin Scheduled At
      * @return string
      */
     public function getOrderDestinationScheduledAt(): string
@@ -366,34 +423,11 @@ class Data extends AbstractHelper
             'origin' => $origin,
             'destination' => $destination,
             'note' => $orderNotes,
-            'cod' => $cod
+            'cod' => $cod,
+            'source' => 'magento'
         ];
 
-        $accessToken = $delyvaxConfig['delyvax_api_token'];
-
-        /**@var $curl \Magento\Framework\HTTP\Client\Curl */
-        $curl = $this->clientFactory->create();
-        $curl->addHeader("Authorization", "Bearer $accessToken");
-        $curl->addHeader("content-type", "application/json");
-        $curl->addHeader("X-Delyvax-Access-Token", $delyvaxConfig['delyvax_api_token']);
-        $curl->post($apiUrl, json_encode($postRequestArr, JSON_UNESCAPED_SLASHES));
-
-        $this->_logger->debug(var_export(json_encode($postRequestArr, JSON_UNESCAPED_SLASHES), true));
-        $this->_logger->debug(var_export($curl->getBody(), true));
-
-        if ($curl->getStatus() == 200) {
-            return [
-                self::STATUS => true,
-                self::STATUS_CODE => $curl->getStatus(),
-                self::RESPONSE => json_decode($curl->getBody(), true)
-            ];
-        } else {
-            return [
-                self::STATUS => false,
-                self::STATUS_CODE => $curl->getStatus(),
-                self::RESPONSE => json_decode($curl->getBody(), true)
-            ];
-        }
+        return $this->makeRequest($apiUrl, $postRequestArr, 'postCreateOrder');
     }
 
     /**
@@ -410,6 +444,131 @@ class Data extends AbstractHelper
             "serviceCode" => $serviceCode,
             "skipQueue" => true,
         ];
+        return $this->makeRequest($apiUrl, $postRequestArr, 'processDelyvaxOrder');
+    }
+
+    /**
+     * @param Order $order
+     * @param bool $createOrderShipment
+     * @throws LocalizedException
+     */
+    public function processDelyvaxOrderIfDraft(Order $order, $createOrderShipment = false)
+    {
+        if ($order->getDelyvaxOrderId() != NULL && $order->getDelyvaxOrderStatus() == self::DELYVAX_SHIPMENT_STATUS_DRAFT) {
+            $serviceCode = $this->getServiceCodeFromShippingMethod($order->getShippingMethod());
+            $processOrderResponse = $this->processDelyvaxOrder($order->getDelyvaxOrderId(), $serviceCode);
+            file_put_contents('var/log/orderPlaceAfter.txt', '\n--------------------------\processOrderResponse: \n'. $order->getIncrementId() . print_r($processOrderResponse, TRUE), FILE_APPEND);
+
+            if ($processOrderResponse[self::STATUS]) {
+                $processOrderResponse = $processOrderResponse[self::RESPONSE];
+
+                $orderRespData['delyvax_consignment_number'] = NULL;
+                if (array_key_exists('data', $processOrderResponse)) {
+                    $orderRespData['delyvax_consignment_number'] = (array_key_exists('consignmentNo', $processOrderResponse['data'])) ? $processOrderResponse['data']['consignmentNo'] : NULL;
+                    $orderRespData['delyvax_order_status'] = (array_key_exists('status', $processOrderResponse['data'])) ? $processOrderResponse['data']['status'] : NULL;
+                }
+
+                try {
+                    $order->addCommentToStatusHistory('Shipment is ready to collect by ' . $order->getShippingDescription(), 'dx-preparing', false);
+                    $order->addData($orderRespData);
+                    $this->_resourceOrder->save($order);
+                } catch (LocalizedException | \Exception $exception) {
+                    $this->_logger->critical($exception->getMessage());
+                }
+
+                if ($createOrderShipment) {
+                    // Check if order can be shipped or has already shipped
+                    if (!$order->canShip()) {
+                        throw new LocalizedException(
+                            __('You can\'t create an shipment.')
+                        );
+                    }
+                    $shipment = $this->_convertOrder->toShipment($order);
+                    // Loop through order items
+                    foreach ($order->getAllItems() AS $orderItem) {
+                        // Check if order item has qty to ship or is virtual
+                        if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
+                            continue;
+                        }
+                        $qtyShipped = $orderItem->getQtyToShip();
+                        // Create shipment item with qty
+                        $shipmentItem = $this->_convertOrder->itemToShipmentItem($orderItem)->setQty($qtyShipped);
+                        // Add shipment item to shipment
+                        $shipment->addItem($shipmentItem);
+                    }
+                    // Register shipment
+                    $shipment->register();
+                    $shipment->getOrder()->setIsInProcess(true);
+
+                    try {
+                        // Save created shipment and order
+                        $shipment->save();
+                        $shipment->getOrder()->save();
+                        // Send email
+                        $this->_shipmentNotifier->notify($shipment);
+                    } catch (\Exception $e) {
+                        throw new LocalizedException(
+                            __($e->getMessage())
+                        );
+                    }
+
+                    $data = [
+                        'carrier_code' => self::DELYVAX_SHIPMENT_CODE,
+                        'title' => $order->getShippingDescription(),
+                        'number' => $order->getDelyvaxConsignmentNumber(),
+                    ];
+                    $this->setDelyvaxShipmentTrackingInfo($shipment, $order);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param \Magento\Sales\Model\Order\Shipment $shipment
+     * @param Order $order
+     * @throws LocalizedException
+     */
+    public function setDelyvaxShipmentTrackingInfo(\Magento\Sales\Model\Order\Shipment $shipment, Order $order)
+    {
+        $data = [
+            'carrier_code' => self::DELYVAX_SHIPMENT_CODE,
+            'title' => $order->getShippingDescription(),
+            'number' => $order->getDelyvaxConsignmentNumber(),
+        ];
+        try {
+            $track = $this->_trackFactory->create()->addData($data);
+            $shipment->addTrack($track)->save();
+        } catch (\Exception $e) {
+            throw new LocalizedException(
+                __($e->getMessage())
+            );
+        }
+    }
+
+    /**
+     * @param string $eventName
+     * @return array
+     */
+    public function postCreateWebhook(string $eventName): array
+    {
+
+        $apiUrl = self::DELYVAX_API_ENDPOINT . "/webhook/";
+        $storeWebhookUrl = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB) . 'delyvax/webhook/tracking';
+        $postRequestArr = [
+            "event" => $eventName,
+            "url" => $storeWebhookUrl,
+        ];
+        return $this->makeRequest($apiUrl, $postRequestArr, 'postCreateWebhook');
+    }
+
+    /**
+     * @param string $apiUrl
+     * @param array $postRequestArr
+     * @param string $requestActionName
+     * @return array
+     */
+    public function makeRequest(string $apiUrl, array $postRequestArr, string $requestActionName): array
+    {
         $delyvaxConfig = $this->getDelyvaxConfig();
         $accessToken = $delyvaxConfig['delyvax_api_token'];
 
@@ -420,10 +579,12 @@ class Data extends AbstractHelper
         $curl->addHeader("X-Delyvax-Access-Token", $delyvaxConfig['delyvax_api_token']);
         $curl->post($apiUrl, json_encode($postRequestArr, JSON_UNESCAPED_SLASHES));
 
+        $this->_logger->debug(var_export('-------------' . $requestActionName . '-------------', true));
         $this->_logger->debug(var_export(json_encode($postRequestArr, JSON_UNESCAPED_SLASHES), true));
+        $this->_logger->debug(var_export($curl->getStatus(), true));
         $this->_logger->debug(var_export($curl->getBody(), true));
 
-        if ($curl->getStatus() == 200) {
+        if ($curl->getStatus() == 200 || $curl->getStatus() == 100) {
             return [
                 self::STATUS => true,
                 self::STATUS_CODE => $curl->getStatus(),
@@ -439,67 +600,21 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param Order $order
-     * @param bool $createOrderShipment
-     * @throws LocalizedException
+     * @return array
      */
-    public function processDelyvaxOrderIfDraft(Order $order, $createOrderShipment = false)
+    public function getDelyvaxStatusCodeAndLabel(): array
     {
-        if ($order->getDelyvaxOrderId() != NULL && $order->getDelyvaxOrderStatus() == self::DELYVAX_SHIPMENT_STATUS_DRAFT) {
-            $serviceCode = $this->getServiceCodeFromShippingMethod($order->getShippingMethod());
-            $processOrderResponse = $this->processDelyvaxOrder($order->getDelyvaxOrderId(), $serviceCode);
-            file_put_contents('var/log/orderPlaceAfter.txt', '\n--------------------------\processOrderResponse: \n'. $order->getIncrementId() . print_r($processOrderResponse, TRUE), FILE_APPEND);
-            $processOrderResponse = $processOrderResponse[self::RESPONSE];
-
-            $orderRespData['delyvax_consignment_number'] = NULL;
-            if (array_key_exists('data', $processOrderResponse)) {
-                $orderRespData['delyvax_consignment_number'] = (array_key_exists('consignmentNo', $processOrderResponse['data'])) ? $processOrderResponse['data']['consignmentNo'] : NULL;
-                $orderRespData['delyvax_order_status'] = (array_key_exists('status', $processOrderResponse['data'])) ? $processOrderResponse['data']['status'] : NULL;
-            }
-
-            try {
-                $order->addData($orderRespData);
-                $this->_resourceOrder->save($order);
-            } catch (LocalizedException | \Exception $exception) {
-                $this->_logger->critical($exception->getMessage());
-            }
-
-            if ($createOrderShipment) {
-                // Check if order can be shipped or has already shipped
-                if (!$order->canShip()) {
-                    throw new \Magento\Framework\Exception\LocalizedException(
-                        __('You can\'t create an shipment.')
-                    );
-                }
-                $shipment = $this->_convertOrder->toShipment($order);
-                // Loop through order items
-                foreach ($order->getAllItems() AS $orderItem) {
-                    // Check if order item has qty to ship or is virtual
-                    if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
-                        continue;
-                    }
-                    $qtyShipped = $orderItem->getQtyToShip();
-                    // Create shipment item with qty
-                    $shipmentItem = $this->_convertOrder->itemToShipmentItem($orderItem)->setQty($qtyShipped);
-                    // Add shipment item to shipment
-                    $shipment->addItem($shipmentItem);
-                }
-                // Register shipment
-                $shipment->register();
-                $shipment->getOrder()->setIsInProcess(true);
-
-                try {
-                    // Save created shipment and order
-                    $shipment->save();
-                    $shipment->getOrder()->save();
-                    // Send email
-                    $this->_shipmentNotifier->notify($shipment);
-                } catch (\Exception $e) {
-                    throw new LocalizedException(
-                        __($e->getMessage())
-                    );
-                }
-            }
-        }
+        return [
+            'dx-preparing' => 'Preparing',
+            'dx-ready-to-collect' => 'Ready to collect',
+            'dx-courier-accepted' => 'Courier accepted',
+            'dx-start-collecting' => 'Pending pick up',
+            'dx-collected' => 'Pick up complete',
+            'dx-failed-collection' => 'Pick up failed',
+            'dx-start-delivery' => 'On the way for delivery',
+            'dx-failed-delivery' => 'Delivery failed',
+            'dx-request-refund' => 'Request refund'
+        ];
     }
+
 }

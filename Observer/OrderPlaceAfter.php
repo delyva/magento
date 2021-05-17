@@ -92,20 +92,22 @@ class OrderPlaceAfter implements ObserverInterface
             $createOrderResponse = $this->_delyvaxHelper->postCreateOrder($origin, $destination, $serviceCode, $cod, $OriginOrderNotes, $process);
             file_put_contents('var/log/orderPlaceAfter.txt', '\n--------------------------\createOrderResponse: \n'. $order->getIncrementId() . print_r($createOrderResponse, TRUE), FILE_APPEND);
 
-            $createOrderResponse = $createOrderResponse[DelyvaxHelper::RESPONSE];
-            $orderRespData['delyvax_origin_scheduled_at'] = strtotime($originScheduledAt);
-            $orderRespData['delyvax_dest_scheduled_at'] = strtotime($destinationScheduledAt);
-            if (array_key_exists('data', $createOrderResponse)) {
-                $orderRespData['delyvax_order_id'] = (array_key_exists('id', $createOrderResponse['data'])) ? $createOrderResponse['data']['id'] : NULL;
-                $orderRespData['delyvax_consignment_number'] = (array_key_exists('consignmentNo', $createOrderResponse['data'])) ? $createOrderResponse['data']['consignmentNo'] : NULL;
-                $orderRespData['delyvax_order_status'] = (array_key_exists('status', $createOrderResponse['data'])) ? $createOrderResponse['data']['status'] : NULL;
-            }
+            if ($createOrderResponse[DelyvaxHelper::STATUS]) {
+                $createOrderResponse = $createOrderResponse[DelyvaxHelper::RESPONSE];
+                $orderRespData['delyvax_origin_scheduled_at'] = strtotime($originScheduledAt);
+                $orderRespData['delyvax_dest_scheduled_at'] = strtotime($destinationScheduledAt);
+                if (array_key_exists('data', $createOrderResponse)) {
+                    $orderRespData['delyvax_order_id'] = (array_key_exists('id', $createOrderResponse['data'])) ? $createOrderResponse['data']['id'] : NULL;
+                    $orderRespData['delyvax_consignment_number'] = (array_key_exists('consignmentNo', $createOrderResponse['data'])) ? $createOrderResponse['data']['consignmentNo'] : NULL;
+                    $orderRespData['delyvax_order_status'] = (array_key_exists('status', $createOrderResponse['data'])) ? $createOrderResponse['data']['status'] : NULL;
+                }
 
-            try {
-                $order->addData($orderRespData);
-                $this->_resourceOrder->save($order);
-            } catch (LocalizedException | \Exception $exception) {
-                $this->logger->critical($exception->getMessage());
+                try {
+                    $order->addData($orderRespData);
+                    $this->_resourceOrder->save($order);
+                } catch (LocalizedException | \Exception $exception) {
+                    $this->logger->critical($exception->getMessage());
+                }
             }
         }
 

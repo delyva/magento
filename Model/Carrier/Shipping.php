@@ -1,27 +1,18 @@
 <?php
 namespace Delyvax\Shipment\Model\Carrier;
 
+use Magento\Framework\Xml\Security;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Magento\Shipping\Model\Rate\Result;
 use Delyvax\Shipment\Helper\Data as DelyvaxHelper;
 
-class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements
+class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline implements
     \Magento\Shipping\Model\Carrier\CarrierInterface
 {
     /**
      * @var string
      */
     protected $_code = 'delyvax_shipment';
-
-    /**
-     * @var \Magento\Shipping\Model\Rate\ResultFactory
-     */
-    protected $_rateResultFactory;
-
-    /**
-     * @var \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory
-     */
-    protected $_rateMethodFactory;
 
     /**
      * @var DelyvaxHelper
@@ -35,12 +26,21 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
 
     /**
      * Shipping constructor.
-     *
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface          $scopeConfig
-     * @param \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory  $rateErrorFactory
-     * @param \Psr\Log\LoggerInterface                                    $logger
-     * @param \Magento\Shipping\Model\Rate\ResultFactory                  $rateResultFactory
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param Security $xmlSecurity
+     * @param \Magento\Shipping\Model\Simplexml\ElementFactory $xmlElFactory
+     * @param \Magento\Shipping\Model\Rate\ResultFactory $rateFactory
      * @param \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory
+     * @param \Magento\Shipping\Model\Tracking\ResultFactory $trackFactory
+     * @param \Magento\Shipping\Model\Tracking\Result\ErrorFactory $trackErrorFactory
+     * @param \Magento\Shipping\Model\Tracking\Result\StatusFactory $trackStatusFactory
+     * @param \Magento\Directory\Model\RegionFactory $regionFactory
+     * @param \Magento\Directory\Model\CountryFactory $countryFactory
+     * @param \Magento\Directory\Model\CurrencyFactory $currencyFactory
+     * @param \Magento\Directory\Helper\Data $directoryData
+     * @param \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
      * @param DelyvaxHelper $delyvaxHelper
      * @param \Magento\Customer\Model\Session $customerSession
      * @param array $data
@@ -49,17 +49,42 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory,
+        Security $xmlSecurity,
+        \Magento\Shipping\Model\Simplexml\ElementFactory $xmlElFactory,
+        \Magento\Shipping\Model\Rate\ResultFactory $rateFactory,
         \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory,
+        \Magento\Shipping\Model\Tracking\ResultFactory $trackFactory,
+        \Magento\Shipping\Model\Tracking\Result\ErrorFactory $trackErrorFactory,
+        \Magento\Shipping\Model\Tracking\Result\StatusFactory $trackStatusFactory,
+        \Magento\Directory\Model\RegionFactory $regionFactory,
+        \Magento\Directory\Model\CountryFactory $countryFactory,
+        \Magento\Directory\Model\CurrencyFactory $currencyFactory,
+        \Magento\Directory\Helper\Data $directoryData,
+        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
         DelyvaxHelper $delyvaxHelper,
         \Magento\Customer\Model\Session $customerSession,
         array $data = []
     ) {
-        $this->_rateResultFactory = $rateResultFactory;
-        $this->_rateMethodFactory = $rateMethodFactory;
         $this->_delyvaxHelper = $delyvaxHelper;
         $this->customerSession = $customerSession;
-        parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
+        parent::__construct(
+            $scopeConfig,
+            $rateErrorFactory,
+            $logger,
+            $xmlSecurity,
+            $xmlElFactory,
+            $rateFactory,
+            $rateMethodFactory,
+            $trackFactory,
+            $trackErrorFactory,
+            $trackStatusFactory,
+            $regionFactory,
+            $countryFactory,
+            $currencyFactory,
+            $directoryData,
+            $stockRegistry,
+            $data
+        );
     }
 
     /**
@@ -69,6 +94,19 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
     public function getAllowedMethods()
     {
         return [$this->_code => $this->getConfigData('name')];
+    }
+
+    public function getFakeShippingMethod() {
+        $result = $this->_rateFactory->create();
+        $method = $this->_rateMethodFactory->create();
+        $method->setCarrier($this->_code);
+        $method->setCarrierTitle('Webkul custom Shipping 4');
+        $method->setMethod($this->_code);
+        $method->setMethodTitle('Webkul Custom Shipping 4');
+        $method->setCost(10);
+        $method->setPrice(10);
+        $result->append($method);
+        return $result;
     }
 
     /**
@@ -100,15 +138,17 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
             "postcode" => $request->getDestPostcode(),
             "country" => $request->getDestCountryId()
         ];
+        
+        $totalWeight = $this->_delyvaxHelper->calculateWeightBasedOnDelyvaxSettings($request);
         $weight = [
             "unit" => "kg",
-            "value" => $request->getPackageWeight()
+            "value" => $totalWeight
         ];
 
         $rates = $this->_delyvaxHelper->getPriceQuote($destination, $weight);
 
         /** @var \Magento\Shipping\Model\Rate\Result $result */
-        $result = $this->_rateResultFactory->create();
+        $result = $this->_rateFactory->create();
 
         if ($rates[DelyvaxHelper::STATUS]) {
             $services = $rates[DelyvaxHelper::RESPONSE]['data']['services'];
@@ -124,13 +164,21 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
                         $cost = round($shipper['price']['amount'] + $percentRate + $flatRate, 2);
                     }
                     if ($cost < 0) { $cost = 0.00; }
+                    $logo = null;
+                    if (array_key_exists('serviceCompany', $shipper['service']) &&
+                        array_key_exists('logo', $shipper['service']['serviceCompany']) &&
+                        $shipper['service']['serviceCompany']['logo'])
+                    {
+                        $logo = DelyvaxHelper::DELYVAX_CDN_URL . $shipper['service']['serviceCompany']['logo'];
+                    }
                     $rate = [
                         'id' => $shipper['service']['code'],
                         'label' => $shipper['service']['name'],
                         'cost' => $cost,
+                        'logo'=> $logo,
                         'taxes' => 'false',
                         'calc_tax' => 'per_order',
-                        'meta_data' => array(
+                                                'meta_data' => array(
                             'service_code' => $shipper['service']['code'],
                         )
                     ];
@@ -167,5 +215,67 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
         $method->setPrice($shippingCost);
         $method->setCost($shippingCost);
         return $method;
+    }
+
+    /**
+     * Check if carrier has shipping tracking option available
+     * @return boolean
+     */
+    public function isTrackingAvailable(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get tracking
+     *
+     * @param string|string[] $trackings
+     * @return \Magento\Shipping\Model\Tracking\Result
+     */
+    public function getTracking($trackings): \Magento\Shipping\Model\Tracking\Result
+    {
+        if (!is_array($trackings)) {
+            $trackings = [$trackings];
+        }
+        $result = $this->_trackFactory->create();
+        $companyCode = $this->getConfigData('credentials/delyvax_company_code');
+        foreach ($trackings as $tracking) {
+            $status = $this->_trackStatusFactory->create();
+            $status->setCarrier($this->_code);
+            $status->setCarrierTitle($this->getConfigData('title'));
+            $status->setTracking($tracking);
+            $status->setPopup(1);
+            $status->setUrl(
+                "https://{$companyCode}.delyva.app/customer/strack?trackingNo={$tracking}"
+            );
+            $result->append($status);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function _doShipmentRequest(\Magento\Framework\DataObject $request)
+    {
+        /*$result = new \Magento\Framework\DataObject();
+        $shippingLabelContent = $request;
+        $result->setShippingLabelContent($shippingLabelContent);
+        return $result;*/
+    }
+
+    /**
+     * Check if carrier has shipping label option available
+     *
+     * @return boolean
+     */
+    public function isShippingLabelsAvailable()
+    {
+        return true;
+    }
+
+    public function proccessAdditionalValidation(\Magento\Framework\DataObject $request) {
+        return true;
     }
 }

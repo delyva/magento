@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <preference for="Magento\Quote\Model\Quote\Address" type="Delyvax\Shipment\Model\Rewrite\Quote\Address" />
+    <preference for="Magento\Sales\Model\ResourceModel\Order\Handler\State" type="Delyvax\Shipment\Model\Rewrite\ResourceModel\Order\Handler\State" />
     <virtualType name="Magento\Sales\Model\ResourceModel\Order\Grid">
         <arguments>
             <argument name="joins" xsi:type="array">

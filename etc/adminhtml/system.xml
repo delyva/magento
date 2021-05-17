@@ -39,16 +39,40 @@
                         <label>API token</label>
                         <comment>DelyvaX API Token (e.g. d50d1780-aabc-11ea-8557-fb3ba8b0c74b)</comment>
                     </field>
-                    <field id="delyvax_api_webhook_enable" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="delyvax_api_webhook_enable" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>API Enable Webhook</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Enable API Webhook for status tracking updates</comment>
+                    </field>
+                    <field id="delyvax_api_webhook_order_created_id" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>DelyvaX API Webhook Order Created ID</label>
+                        <depends>
+                            <field id="delyvax_api_webhook_enable">2</field>
+                        </depends>
+                    </field>
+                    <field id="delyvax_api_webhook_order_failed_id" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>DelyvaX API Webhook Order Failed ID</label>
+                        <depends>
+                            <field id="delyvax_api_webhook_enable">2</field>
+                        </depends>
+                    </field>
+                    <field id="delyvax_api_webhook_order_updated_id" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>DelyvaX API Webhook Order Updated ID</label>
+                        <depends>
+                            <field id="delyvax_api_webhook_enable">2</field>
+                        </depends>
+                    </field>
+                    <field id="delyvax_api_webhook_order_tracking_update_id" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>DelyvaX API Webhook Order Tracking Update ID</label>
+                        <depends>
+                            <field id="delyvax_api_webhook_enable">2</field>
+                        </depends>
                     </field>
                 </group>
 
                 <group id="settings" translate="label" type="text" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>DelyvaX Settings</label>
-                    <field id="create_shipment_on_paid" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <field id="create_shipment_on_paid" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                         <label>Auto Create Shipment on Payment Complete</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Create shipment on successful payment by customer</comment>
@@ -57,12 +81,12 @@
                         <label>Auto Create Shipment on Preparing</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Create shipment on order status = "preparing" by Store/Merchant/Vendor</comment>
-                    </field>
+                    </field>-->
                     <field id="change_order_status" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                         <label>Auto Change Order Status</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Create webhook on DelyvaX customer profile pointing to your store url e.g. https://kedai.matdespatch.com</comment>
-                    </field>-->
+                    </field>
                     <field id="delyvax_processing_days" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Processing days</label>
                         <comment>Number of processing days. e.g. 0 - same day ship out; 1 - next day ship out.</comment>
@@ -81,7 +105,7 @@
                         <source_model>Delyvax\Shipment\Model\Config\Source\DefaultItemType</source_model>
                         <comment>Default task - package item type. e.g. DOCUMENT / PARCEL / FOOD / PACKAGE.</comment>
                     </field>
-                    <field id="delyvax_split_tasks" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <!--<field id="delyvax_split_tasks" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Fulfilment by vendors</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Create tasks and assign to vendors by ext id type and ext id</comment>
@@ -89,6 +113,16 @@
                     <field id="delyvax_ext_id_type" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Personnel External ID Type</label>
                         <comment>Personnel External ID Type. e.g. dokan</comment>
+                    </field>-->
+                    <field id="delyvax_weight_consideration" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Weight Consideration</label>
+                        <source_model>Delyvax\Shipment\Model\Config\Source\WeightConsideration</source_model>
+                        <comment>e.g. BEST-Whichever is higher / ACTUAL-Actual Weight / VOL-Volumetric Weight </comment>
+                    </field>
+                    <field id="delyvax_volumetric_weight_constant" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Volumetric Weight Constant</label>
+                        <source_model>Delyvax\Shipment\Model\Config\Source\VolumetricWeightConstant</source_model>
+                        <comment>e.g. 1000 / 5000 / 6000</comment>
                     </field>
                 </group>
 
@@ -107,17 +141,17 @@
                     </field>
                 </group>
 
-                <field id="sallowspecific" translate="label" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                <field id="sallowspecific" translate="label" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Ship to Applicable Countries</label>
                     <frontend_class>shipping-applicable-country</frontend_class>
                     <source_model>Magento\Shipping\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Ship to Specific Countries</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                     <can_be_empty>1</can_be_empty>
                 </field>
-                <field id="showmethod" translate="label" type="select" sortOrder="225" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="showmethod" translate="label" type="select" sortOrder="225" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Show Method if Not Applicable</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <frontend_class>shipping-skip-hide</frontend_class>
@@ -125,7 +159,7 @@
                 <field id="specificerrmsg" translate="label" type="textarea" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Displayed Error Message</label>
                 </field>
-                <field id="sort_order" translate="label" type="text" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="sort_order" translate="label" type="text" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Sort Order</label>
                 </field>
 
