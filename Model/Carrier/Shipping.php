@@ -96,15 +96,19 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         return [$this->_code => $this->getConfigData('name')];
     }
 
-    public function getFakeShippingMethod() {
+    /**
+     * @return Result
+     */
+    public function getDelyvaxFlatShippingMethod() {
         $result = $this->_rateFactory->create();
         $method = $this->_rateMethodFactory->create();
         $method->setCarrier($this->_code);
-        $method->setCarrierTitle('Webkul custom Shipping 4');
+        $method->setCarrierTitle($this->getConfigData('title'));
         $method->setMethod($this->_code);
-        $method->setMethodTitle('Webkul Custom Shipping 4');
-        $method->setCost(10);
-        $method->setPrice(10);
+        $method->setMethodTitle($this->getConfigData('delyvax_flat_rate_name'));
+        $shippingCost = (float)$this->getConfigData('delyvax_flat_rate');
+        $method->setPrice($shippingCost);
+        $method->setCost($shippingCost);
         $result->append($method);
         return $result;
     }
@@ -118,6 +122,12 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         if (!$this->getConfigFlag('active')) {
             return false;
         }
+        
+        $delyvaxConfig = $this->_delyvaxHelper->getDelyvaxConfig();
+        if ($delyvaxConfig['show_dynamic_rates_on_checkout'] == 0) {
+            return $this->getDelyvaxFlatShippingMethod();
+        }
+
         $streetAddress = preg_split('/\r\n|\r|\n/', $request->getDestStreet());
         $st1 = (isset($streetAddress[0])) ? $streetAddress[0] : '-';
         $st2 = '-';
@@ -154,7 +164,6 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
             $services = $rates[DelyvaxHelper::RESPONSE]['data']['services'];
             foreach ($services as $shipper) {
                 if (isset($shipper['service']['name'])) {
-                    $delyvaxConfig = $this->_delyvaxHelper->getDelyvaxConfig();
                     $ra_percentage = $delyvaxConfig['delyvax_rate_adjustment_percentage'] ?? 1;
                     $percentRate = $ra_percentage / 100 * $shipper['price']['amount'];
                     $flatRate = $delyvaxConfig['delyvax_rate_adjustment_flat'] ?? 0;

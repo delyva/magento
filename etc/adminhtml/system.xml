@@ -3,16 +3,35 @@
     <system>
         <section id="carriers" translate="label" type="text" sortOrder="320" showInDefault="1" showInWebsite="1" showInStore="1">
             <group id="delyvax_shipment" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>DelyvaX Dynamic Shipping rates</label>
+                <label>DelyvaX Shipping Method</label>
                 <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Enable dynamic shipping rate on checkout</comment>
+                    <comment>Enable Delyvax shipping method on Checkout</comment>
                 </field>
                 <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Title</label>
                 </field>
-
+                <field id="show_dynamic_rates_on_checkout" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Enable Dynamic Rates/Services</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Show Dynamic Rates and Services on Checkout</comment>
+                </field>
+                <field id="delyvax_flat_rate" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>DelyvaX Flat Rate</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <comment>Show Flat Rates on Checkout when Dynamic rates disabled</comment>
+                    <depends>
+                        <field id="show_dynamic_rates_on_checkout">0</field>
+                    </depends>
+                </field>
+                <field id="delyvax_flat_rate_name" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>DelyvaX Flat Rate Name</label>
+                    <comment>DelyvaX Flat Rate Name on Checkout when Dynamic rates disabled</comment>
+                    <depends>
+                        <field id="show_dynamic_rates_on_checkout">0</field>
+                    </depends>
+                </field>
                 <group id="credentials" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>DelyvaX Account Credentials</label>
                     <field id="delyvax_company_id" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">

@@ -189,6 +189,8 @@ class Data extends AbstractHelper
     {
         return [
             'title' => $this->scopeConfig->getValue(self::DELYVAX_CONFIG_PATH . 'title'),
+            'show_dynamic_rates_on_checkout' => $this->scopeConfig->getValue(self::DELYVAX_CONFIG_PATH . 'show_dynamic_rates_on_checkout'),
+            'delyvax_flat_rate' => $this->scopeConfig->getValue(self::DELYVAX_CONFIG_PATH . 'delyvax_flat_rate'),
             'delyvax_api_token' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_token'),
             'delyvax_api_webhook_enable' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_enable'),
             'delyvax_company_code' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_company_code'),
@@ -426,6 +428,10 @@ class Data extends AbstractHelper
             'cod' => $cod,
             'source' => 'magento'
         ];
+
+        if ($serviceCode == 'delyvax_shipment') {
+            unset($postRequestArr["serviceCode"]);
+        }
 
         return $this->makeRequest($apiUrl, $postRequestArr, 'postCreateOrder');
     }

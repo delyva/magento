@@ -31,6 +31,12 @@ class OrderPaymentPay implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $order = $observer->getEvent()->getInvoice()->getOrder();
+
+        $serviceCode = $this->_delyvaxHelper->getServiceCodeFromShippingMethod($order->getShippingMethod());
+        if ($serviceCode == 'delyvax_shipment') {
+            return;
+        }
+        
         // check if order shipping method is delyvax
         if (strpos($order->getShippingMethod(), DelyvaxHelper::DELYVAX_SHIPMENT_CODE) !== false) {
             $delyvaxConfig = $this->_delyvaxHelper->getDelyvaxConfig();

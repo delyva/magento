@@ -32,6 +32,12 @@ class OrderShipmentSave implements ObserverInterface
     {
         $shipment = $observer->getEvent()->getShipment();
         $order = $shipment->getOrder();
+
+        $serviceCode = $this->_delyvaxHelper->getServiceCodeFromShippingMethod($order->getShippingMethod());
+        if ($serviceCode == 'delyvax_shipment') {
+            return;
+        }
+
         // check if order shipping method is delyvax
         if (strpos($order->getShippingMethod(), DelyvaxHelper::DELYVAX_SHIPMENT_CODE) !== false) {
             $this->_delyvaxHelper->processDelyvaxOrderIfDraft($order);

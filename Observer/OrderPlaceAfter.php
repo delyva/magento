@@ -81,7 +81,7 @@ class OrderPlaceAfter implements ObserverInterface
             ];
 
             $serviceCode = $this->_delyvaxHelper->getServiceCodeFromShippingMethod($order->getShippingMethod());
-
+            
             // check payment method and set codAmount
             $codAmount = ($order->getPayment()->getMethod() === \Magento\OfflinePayments\Model\Cashondelivery::PAYMENT_METHOD_CASHONDELIVERY_CODE) ? $order->getGrandTotal() : 0;
             $cod = [
