@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="sales_order" resource="sales" engine="innodb" comment="Sales Order">
+        <column xsi:type="timestamp" name="delyvax_origin_scheduled_at" nullable="true" on_update="false" comment="Delyvax Origin Scheduled At"/>
+        <column xsi:type="timestamp" name="delyvax_dest_scheduled_at" nullable="true" on_update="false" comment="Delyvax Destination Scheduled At"/>
+        <column xsi:type="varchar" name="delyvax_order_id" nullable="true" length="128" comment="Delyvax Order Id"/>
+        <column xsi:type="varchar" name="delyvax_consignment_number" nullable="true" length="128" comment="Delyvax Consignment Number"/>
+        <column xsi:type="varchar" name="delyvax_order_status" nullable="true" length="128" comment="Delyvax Order Status"/>
+    </table>
+    <table name="sales_order_grid" resource="sales" engine="innodb" comment="Sales Order Grid">
+        <column xsi:type="timestamp" name="delyvax_origin_scheduled_at" nullable="true" on_update="false" comment="Delyvax Origin Scheduled At"/>
+        <column xsi:type="timestamp" name="delyvax_dest_scheduled_at" nullable="true" on_update="false" comment="Delyvax Destination Scheduled At"/>
+        <column xsi:type="varchar" name="delyvax_order_id" nullable="true" length="128" comment="Delyvax Order Id"/>
+        <column xsi:type="varchar" name="delyvax_consignment_number" nullable="true" length="128" comment="Delyvax Consignment Number"/>
+        <column xsi:type="varchar" name="delyvax_order_status" nullable="true" length="128" comment="Delyvax Order Status"/>
+    </table>
+</schema>

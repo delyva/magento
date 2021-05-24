@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Magento\Quote\Model\Quote\Address" type="Delyvax\Shipment\Model\Rewrite\Quote\Address" />
+    <preference for="Magento\Sales\Model\ResourceModel\Order\Handler\State" type="Delyvax\Shipment\Model\Rewrite\ResourceModel\Order\Handler\State" />
+    <virtualType name="Magento\Sales\Model\ResourceModel\Order\Grid">
+        <arguments>
+            <argument name="joins" xsi:type="array">
+                <item name="flat_order" xsi:type="array">
+                    <item name="table" xsi:type="string">sales_order</item>
+                    <item name="origin_column" xsi:type="string">entity_id</item>
+                    <item name="target_column" xsi:type="string">entity_id</item>
+                </item>
+            </argument>
+            <argument name="columns" xsi:type="array">
+                <item name="delyvax_origin_scheduled_at" xsi:type="string">sales_order.delyvax_origin_scheduled_at</item>
+                <item name="delyvax_dest_scheduled_at" xsi:type="string">sales_order.delyvax_dest_scheduled_at</item>
+                <item name="delyvax_order_id" xsi:type="string">sales_order.delyvax_order_id</item>
+                <item name="delyvax_consignment_number" xsi:type="string">sales_order.delyvax_consignment_number</item>
+                <item name="delyvax_order_status" xsi:type="string">sales_order.delyvax_order_status</item>
+            </argument>
+        </arguments>
+    </virtualType>
+</config>

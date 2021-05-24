@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <columns name="sales_order_columns">
+        <column name="delyvax_origin_scheduled_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>false</filter>
+                <label translate="true">DelyvaX Origin Scheduled At</label>
+                <dateFormat>MMM dd, YYYY, h:mm:ss A</dateFormat>
+                <dataType>date</dataType>
+            </settings>
+        </column>
+        <column name="delyvax_dest_scheduled_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>false</filter>
+                <label translate="true">DelyvaX Destination Scheduled At</label>
+                <dateFormat>MMM dd, YYYY, h:mm:ss A</dateFormat>
+                <dataType>date</dataType>
+            </settings>
+        </column>
+        <!--<column name="delyvax_order_id">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">DelyvaX Order Id</label>
+            </settings>
+        </column>-->
+        <column name="delyvax_consignment_number">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">DelyvaX Consignment Number</label>
+            </settings>
+        </column>
+        <column name="delyvax_order_status">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">DelyvaX Order Status</label>
+            </settings>
+        </column>
+    </columns>
+</listing>

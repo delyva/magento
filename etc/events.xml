@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="sales_order_place_after">
+        <observer name="delyvax_order_place_after_event" instance="Delyvax\Shipment\Observer\OrderPlaceAfter"/>
+    </event>
+    <event name="sales_order_payment_pay">
+        <observer name="delyvax_order_payment_pay_event" instance="Delyvax\Shipment\Observer\OrderPaymentPay" />
+    </event>
+    <event name="sales_order_shipment_save_after">
+        <observer name="delyvax_order_shipment_save_event" instance="Delyvax\Shipment\Observer\OrderShipmentSave" />
+    </event>
+    <event name="admin_system_config_changed_section_carriers">
+        <observer name="custom_admin_system_config_changed_section_carriers" instance="Delyvax\Shipment\Observer\CarriersConfigSave"/>
+    </event>
+</config>

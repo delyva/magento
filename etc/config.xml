@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <carriers>
+            <delyvax_shipment>
+                <active>1</active>
+                <sallowspecific>0</sallowspecific>
+                <model>Delyvax\Shipment\Model\Carrier\Shipping</model>
+                <price>0.00</price>
+                <title>DelyvaX Shipment</title>
+                <specificerrmsg>Sorry, something went wrong with the shipping rates. If the problem persists, please contact us!</specificerrmsg>
+                <handling_type>F</handling_type>
+                <is_online>1</is_online>
+                <max_package_weight>1000</max_package_weight>
+                <show_dynamic_rates_on_checkout>1</show_dynamic_rates_on_checkout>
+                <delyvax_flat_rate>0.00</delyvax_flat_rate>
+                <delyvax_flat_rate_name>Fixed</delyvax_flat_rate_name>
+            </delyvax_shipment>
+        </carriers>
+    </default>
+</config>
