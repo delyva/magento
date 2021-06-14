@@ -34,3 +34,13 @@ With this settings, user should be able to get Delyvax Shipping rates and carrie
 
 ### Setting Store information (name etc) that will be sent to DelyvaX on Order creation
 From your Magento admin panel, follow this route: `Stores > Settings > Configuration > General > General > Store Information` [(screenshot)](https://prnt.sc/11mqbz3)
+
+### To update plugin as per the latest code
+Download/Clone latest code from repository and paste it in `magento_root/app/code/DelyvaX/Shipment/` directory, then run the following commands in Magento 2 root directory:
+
+```
+php bin/magento setup:upgrade
+php bin/magento setup:di:compile
+php bin/magento setup:static-content:deploy
+php bin/magento cache:flush
+```

@@ -1,0 +1,28 @@
+{
+  "name": "delyvax/module-shipment",
+  "description": "DelyvaX Shipping Method",
+  "require": {
+    "php": "^7.1.0",
+    "magento/product-community-edition": "^2.3.0"
+  },
+  "type": "magento2-module",
+  "license": [
+    "OSL-3.0",
+    "AFL-3.0"
+  ],
+  "authors": [
+    {
+      "name": "DelyvaX Team",
+      "email": "hanif@delyva.com"
+    }
+  ],
+  "version": "1.0.0",
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Delyvax\\Shipment\\": ""
+    }
+  }
+}

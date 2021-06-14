@@ -391,7 +391,7 @@ class Data extends AbstractHelper
     {
         $shippingAddress = $order->getShippingAddress()->getData();
         $address = explode(PHP_EOL, $shippingAddress['street']);
-        return [
+        $destinationContact = [
             'name' => $shippingAddress['firstname'] . ' ' . $shippingAddress['lastname'],
             "email" => $shippingAddress['email'],
             "phone" => $shippingAddress['telephone'],
@@ -403,6 +403,10 @@ class Data extends AbstractHelper
             "postcode" => $shippingAddress['postcode'],
             "country" => $shippingAddress['country_id']
         ];
+        if ($destinationContact["state"] == null || strlen($destinationContact["state"]) < 1) {
+            unset($destinationContact["state"]);
+        }
+        return $destinationContact;
     }
 
     /**
