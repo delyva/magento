@@ -208,6 +208,7 @@ class Data extends AbstractHelper
             'delyvax_task_item_type' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_task_item_type'),
             'delyvax_weight_consideration' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_weight_consideration'),
             'delyvax_volumetric_weight_constant' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_volumetric_weight_constant'),
+            'delyvax_source' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_source'),
             'delyvax_rate_adjustment_flat' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_flat'),
             'delyvax_rate_adjustment_percentage' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_percentage'),
             'delyvax_rate_adjustment_type' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_type')
@@ -430,7 +431,7 @@ class Data extends AbstractHelper
             'destination' => $destination,
             'note' => $orderNotes,
             'cod' => $cod,
-            'source' => 'magento'
+            'source' => $delyvaxConfig['delyvax_source']
         ];
 
         if ($serviceCode == 'delyvax_shipment') {
