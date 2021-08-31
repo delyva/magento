@@ -223,9 +223,6 @@ class Data extends AbstractHelper
 //        $this->_configWriter->save(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_updated_id', '&&&', $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT, $scopeId = 0);
         return [
             'delyvax_api_webhook_enable' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_enable'),
-            'delyvax_api_webhook_order_created_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_created_id'),
-            'delyvax_api_webhook_order_failed_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_failed_id'),
-            'delyvax_api_webhook_order_updated_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_updated_id'),
             'delyvax_api_webhook_order_tracking_update_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_tracking_update_id')
         ];
     }

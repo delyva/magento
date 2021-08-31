@@ -63,24 +63,6 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Enable API Webhook for status tracking updates</comment>
                     </field>
-                    <field id="delyvax_api_webhook_order_created_id" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>DelyvaX API Webhook Order Created ID</label>
-                        <depends>
-                            <field id="delyvax_api_webhook_enable">2</field>
-                        </depends>
-                    </field>
-                    <field id="delyvax_api_webhook_order_failed_id" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>DelyvaX API Webhook Order Failed ID</label>
-                        <depends>
-                            <field id="delyvax_api_webhook_enable">2</field>
-                        </depends>
-                    </field>
-                    <field id="delyvax_api_webhook_order_updated_id" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>DelyvaX API Webhook Order Updated ID</label>
-                        <depends>
-                            <field id="delyvax_api_webhook_enable">2</field>
-                        </depends>
-                    </field>
                     <field id="delyvax_api_webhook_order_tracking_update_id" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>DelyvaX API Webhook Order Tracking Update ID</label>
                         <depends>

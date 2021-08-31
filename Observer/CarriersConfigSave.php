@@ -44,27 +44,6 @@ class CarriersConfigSave implements ObserverInterface
     {
         $config = $this->_delyvaxHelper->getDelyvaxWebhookConfig();
         if ($config['delyvax_api_webhook_enable']) {
-            if (!$config['delyvax_api_webhook_order_created_id']) {
-                // $this->_logger->info('delyvax_api_webhook_order_created_id not exist');
-                $result = $this->_delyvaxHelper->postCreateWebhook('order.created');
-                if (array_key_exists('id', $result[DelyvaxHelper::RESPONSE])) {
-                    $this->_configWriter->save(DelyvaxHelper::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_created_id', $result[DelyvaxHelper::RESPONSE]['id'], $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT, $scopeId = 0);
-                }
-            }
-            if (!$config['delyvax_api_webhook_order_failed_id']) {
-                // $this->_logger->info('delyvax_api_webhook_order_failed_id not exist');
-                $result = $this->_delyvaxHelper->postCreateWebhook('order.failed');
-                if (array_key_exists('id', $result[DelyvaxHelper::RESPONSE])) {
-                    $this->_configWriter->save(DelyvaxHelper::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_failed_id', $result[DelyvaxHelper::RESPONSE]['id'], $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT, $scopeId = 0);
-                }
-            }
-            if (!$config['delyvax_api_webhook_order_updated_id']) {
-                // $this->_logger->info('delyvax_api_webhook_order_updated_id not exist');
-                $result = $this->_delyvaxHelper->postCreateWebhook('order.updated');
-                if (array_key_exists('id', $result[DelyvaxHelper::RESPONSE])) {
-                    $this->_configWriter->save(DelyvaxHelper::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_updated_id', $result[DelyvaxHelper::RESPONSE]['id'], $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT, $scopeId = 0);
-                }
-            }
             if (!$config['delyvax_api_webhook_order_tracking_update_id']) {
                 // $this->_logger->info('delyvax_api_webhook_order_tracking_update_id not exist');
                 $result = $this->_delyvaxHelper->postCreateWebhook('order_tracking.update');
