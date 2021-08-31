@@ -17,6 +17,7 @@
                 <delyvax_flat_rate_name>Fixed</delyvax_flat_rate_name>
                 <settings>
                     <delyvax_source>magento</delyvax_source>
+                    <delyvax_processing_time>11</delyvax_processing_time>
                 </settings>
             </delyvax_shipment>
         </carriers>

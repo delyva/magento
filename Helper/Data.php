@@ -204,6 +204,7 @@ class Data extends AbstractHelper
             'change_order_status' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'change_order_status'),
             'delyvax_processing_days' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_processing_days'),
             'delyvax_processing_hours' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_processing_hours'),
+            'delyvax_processing_time' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_processing_time'),
             'delyvax_split_tasks' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_split_tasks'),
             'delyvax_task_item_type' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_task_item_type'),
             'delyvax_weight_consideration' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_weight_consideration'),
@@ -316,11 +317,13 @@ class Data extends AbstractHelper
         // Convert days into hours, and add up processing hours into it
         $processingHours = $delyvaxConfig['delyvax_processing_days'] * 24 + $delyvaxConfig['delyvax_processing_hours'];
         $currentDateTime = $this->_timezoneInterface->date()->format('c');
-        return $this->_timezoneInterface->date(strtotime($currentDateTime." +{$processingHours} hours"))->format('c');
+        $scheduledDateTime = $this->_timezoneInterface->date(strtotime($currentDateTime." +{$processingHours} hours"));
+        return $scheduledDateTime->setTime($delyvaxConfig['delyvax_processing_time'], 0)->format('c');
     }
 
     /**
      * Adding 24 hours to Origin Scheduled At
+     * Obsolete currently as using OriginScheduledAt for destination as well
      * @return string
      */
     public function getOrderDestinationScheduledAt(): string

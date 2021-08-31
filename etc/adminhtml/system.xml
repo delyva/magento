@@ -91,6 +91,11 @@
                         <label>Processing hours</label>
                         <comment>Number of processing hours. e.g. 1 - ship in 1 hour; 4 - ship in 4 hours.</comment>
                     </field>
+                    <field id="delyvax_processing_time" translate="label" type="select" sortOrder="95" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Processing Time</label>
+                        <source_model>Delyvax\Shipment\Model\Config\Source\ProcessingTime</source_model>
+                        <comment>If processing day is 1 or more, system will use this time as processing time and ignore processing hour. e.g. processing day: 1 and processing time: 11:00, delivery order will be scheduled to tomorrow at 11:00.</comment>
+                    </field>
                     <field id="delyvax_item_type" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Default Order - Item type</label>
                         <source_model>Delyvax\Shipment\Model\Config\Source\DefaultItemType</source_model>
