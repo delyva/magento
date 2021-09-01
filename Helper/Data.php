@@ -204,10 +204,12 @@ class Data extends AbstractHelper
             'change_order_status' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'change_order_status'),
             'delyvax_processing_days' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_processing_days'),
             'delyvax_processing_hours' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_processing_hours'),
+            'delyvax_processing_time' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_processing_time'),
             'delyvax_split_tasks' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_split_tasks'),
             'delyvax_task_item_type' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_task_item_type'),
             'delyvax_weight_consideration' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_weight_consideration'),
             'delyvax_volumetric_weight_constant' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_volumetric_weight_constant'),
+            'delyvax_source' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_source'),
             'delyvax_rate_adjustment_flat' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_flat'),
             'delyvax_rate_adjustment_percentage' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_percentage'),
             'delyvax_rate_adjustment_type' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_type')
@@ -222,9 +224,6 @@ class Data extends AbstractHelper
 //        $this->_configWriter->save(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_updated_id', '&&&', $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT, $scopeId = 0);
         return [
             'delyvax_api_webhook_enable' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_enable'),
-            'delyvax_api_webhook_order_created_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_created_id'),
-            'delyvax_api_webhook_order_failed_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_failed_id'),
-            'delyvax_api_webhook_order_updated_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_updated_id'),
             'delyvax_api_webhook_order_tracking_update_id' => $this->scopeConfig->getValue(self::DELYVAX_CREDENTIALS_PATH . 'delyvax_api_webhook_order_tracking_update_id')
         ];
     }
@@ -318,11 +317,13 @@ class Data extends AbstractHelper
         // Convert days into hours, and add up processing hours into it
         $processingHours = $delyvaxConfig['delyvax_processing_days'] * 24 + $delyvaxConfig['delyvax_processing_hours'];
         $currentDateTime = $this->_timezoneInterface->date()->format('c');
-        return $this->_timezoneInterface->date(strtotime($currentDateTime." +{$processingHours} hours"))->format('c');
+        $scheduledDateTime = $this->_timezoneInterface->date(strtotime($currentDateTime." +{$processingHours} hours"));
+        return $scheduledDateTime->setTime($delyvaxConfig['delyvax_processing_time'], 0)->format('c');
     }
 
     /**
      * Adding 24 hours to Origin Scheduled At
+     * Obsolete currently as using OriginScheduledAt for destination as well
      * @return string
      */
     public function getOrderDestinationScheduledAt(): string
@@ -430,7 +431,7 @@ class Data extends AbstractHelper
             'destination' => $destination,
             'note' => $orderNotes,
             'cod' => $cod,
-            'source' => 'magento'
+            'source' => $delyvaxConfig['delyvax_source']
         ];
 
         if ($serviceCode == 'delyvax_shipment') {

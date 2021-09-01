@@ -63,24 +63,6 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Enable API Webhook for status tracking updates</comment>
                     </field>
-                    <field id="delyvax_api_webhook_order_created_id" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>DelyvaX API Webhook Order Created ID</label>
-                        <depends>
-                            <field id="delyvax_api_webhook_enable">2</field>
-                        </depends>
-                    </field>
-                    <field id="delyvax_api_webhook_order_failed_id" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>DelyvaX API Webhook Order Failed ID</label>
-                        <depends>
-                            <field id="delyvax_api_webhook_enable">2</field>
-                        </depends>
-                    </field>
-                    <field id="delyvax_api_webhook_order_updated_id" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>DelyvaX API Webhook Order Updated ID</label>
-                        <depends>
-                            <field id="delyvax_api_webhook_enable">2</field>
-                        </depends>
-                    </field>
                     <field id="delyvax_api_webhook_order_tracking_update_id" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>DelyvaX API Webhook Order Tracking Update ID</label>
                         <depends>
@@ -96,11 +78,6 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Create shipment on successful payment by customer</comment>
                     </field>
-                    <!--<field id="create_shipment_on_confirm" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                        <label>Auto Create Shipment on Preparing</label>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                        <comment>Create shipment on order status = "preparing" by Store/Merchant/Vendor</comment>
-                    </field>-->
                     <field id="change_order_status" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                         <label>Auto Change Order Status</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -114,6 +91,11 @@
                         <label>Processing hours</label>
                         <comment>Number of processing hours. e.g. 1 - ship in 1 hour; 4 - ship in 4 hours.</comment>
                     </field>
+                    <field id="delyvax_processing_time" translate="label" type="select" sortOrder="95" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Processing Time</label>
+                        <source_model>Delyvax\Shipment\Model\Config\Source\ProcessingTime</source_model>
+                        <comment>If processing day is 1 or more, system will use this time as processing time and ignore processing hour. e.g. processing day: 1 and processing time: 11:00, delivery order will be scheduled to tomorrow at 11:00.</comment>
+                    </field>
                     <field id="delyvax_item_type" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Default Order - Item type</label>
                         <source_model>Delyvax\Shipment\Model\Config\Source\DefaultItemType</source_model>
@@ -124,15 +106,6 @@
                         <source_model>Delyvax\Shipment\Model\Config\Source\DefaultItemType</source_model>
                         <comment>Default task - package item type. e.g. DOCUMENT / PARCEL / FOOD / PACKAGE.</comment>
                     </field>
-                    <!--<field id="delyvax_split_tasks" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Fulfilment by vendors</label>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                        <comment>Create tasks and assign to vendors by ext id type and ext id</comment>
-                    </field>
-                    <field id="delyvax_ext_id_type" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Personnel External ID Type</label>
-                        <comment>Personnel External ID Type. e.g. dokan</comment>
-                    </field>-->
                     <field id="delyvax_weight_consideration" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Weight Consideration</label>
                         <source_model>Delyvax\Shipment\Model\Config\Source\WeightConsideration</source_model>
@@ -142,6 +115,10 @@
                         <label>Volumetric Weight Constant</label>
                         <source_model>Delyvax\Shipment\Model\Config\Source\VolumetricWeightConstant</source_model>
                         <comment>e.g. 1000 / 5000 / 6000</comment>
+                    </field>
+                    <field id="delyvax_source" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Source of</label>
+                        <comment>Leave empty of type 'magento' or your web design agency code.</comment>
                     </field>
                 </group>
 

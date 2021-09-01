@@ -61,19 +61,6 @@ class Tracking extends \Magento\Framework\App\Action\Action implements CsrfAware
      */
     public function execute()
     {
-        /*$delyvaxOrderId = 'b7c68d33-ddfe-4bbb-bb75-61524565fbdc';
-        $searchCriteria = $this->_searchCriteriaBuilder
-            ->addFilter('delyvax_order_id', $delyvaxOrderId, 'eq')->create();
-        $orderList = $this->_orderRepository->getList($searchCriteria)->getItems();
-        $order = reset($orderList);
-//        $orderRepository = $this->_orderRepository->get($order->getId());
-//        $orderRepository->setState('processing')->save();
-        $order->setState('processing');
-        $order->addCommentToStatusHistory('Order status changed to Pick up complete.', 'dx-collected', true);
-        $this->_orderResourceModel->save($order);
-        var_dump(get_class($order)); var_dump($order->getIncrementId()); var_dump($order->getDelyvaxConsignmentNumber()); var_dump($order->getDelyvaxOrderStatus()); var_dump($order->getStatus());  var_dump($order->getState());
-        die();*/
-
         $raw = file_get_contents('php://input');
         if ($raw) {
             $data = json_decode($raw, true);
@@ -93,7 +80,13 @@ class Tracking extends \Magento\Framework\App\Action\Action implements CsrfAware
                                 $status = $statusCodesArr[$delyvaxStatusCode]['status'];
                                 if ($order->getStatus() != $status) {
                                     $order->setDelyvaxOrderStatus($status);
-                                    $order->addCommentToStatusHistory($statusCodesArr[$delyvaxStatusCode]['status_desc'], $status, true);
+                                    if ($delyvaxStatusCode == '900' || $delyvaxStatusCode == '475') {
+                                        // Just add the comment in order history, not change order status
+                                        $order->addCommentToStatusHistory($statusCodesArr[$delyvaxStatusCode]['status_desc']);
+                                    } else {
+                                        // Add comment, change status and make it visible on FE
+                                        $order->addCommentToStatusHistory($statusCodesArr[$delyvaxStatusCode]['status_desc'], $status, true);
+                                    }
                                     $this->_orderResourceModel->save($order);
                                 }
                             }

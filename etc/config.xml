@@ -15,6 +15,10 @@
                 <show_dynamic_rates_on_checkout>1</show_dynamic_rates_on_checkout>
                 <delyvax_flat_rate>0.00</delyvax_flat_rate>
                 <delyvax_flat_rate_name>Fixed</delyvax_flat_rate_name>
+                <settings>
+                    <delyvax_source>magento</delyvax_source>
+                    <delyvax_processing_time>11</delyvax_processing_time>
+                </settings>
             </delyvax_shipment>
         </carriers>
     </default>
