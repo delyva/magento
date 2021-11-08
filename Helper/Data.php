@@ -25,7 +25,7 @@ use Magento\Shipping\Model\ShipmentNotifier;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Quote\Model\Quote\Address\RateRequest;
-
+use Delyvax\Shipment\Logger\Logger as DelyvaLogger;
 
 class Data extends AbstractHelper
 {
@@ -110,6 +110,11 @@ class Data extends AbstractHelper
      * @var ProductRepository
      */
     protected $_productRepository;
+
+    /**
+     * @var DelyvaLogger
+     */
+    protected $_delyvaLogger;
     
     /**
      * Data constructor.
@@ -127,6 +132,7 @@ class Data extends AbstractHelper
      * @param ShipmentNotifier $shipmentNotifier
      * @param TrackFactory $trackFactory
      * @param ProductRepository $productRepository
+     * @param DelyvaLogger $logger
      */
     public function __construct(
         Context $context,
@@ -142,7 +148,8 @@ class Data extends AbstractHelper
         ConvertOrder $convertOrder,
         ShipmentNotifier $shipmentNotifier,
         TrackFactory $trackFactory,
-        ProductRepository $productRepository
+        ProductRepository $productRepository,
+        DelyvaLogger $logger
     )
     {
         parent::__construct($context);
@@ -159,6 +166,7 @@ class Data extends AbstractHelper
         $this->_shipmentNotifier = $shipmentNotifier;
         $this->_trackFactory = $trackFactory;
         $this->_productRepository = $productRepository;
+        $this->_delyvaLogger = $logger;
     }
 
     /**
@@ -484,7 +492,7 @@ class Data extends AbstractHelper
                     $order->addData($orderRespData);
                     $this->_resourceOrder->save($order);
                 } catch (LocalizedException | \Exception $exception) {
-                    $this->_logger->critical($exception->getMessage());
+                    $this->_delyvaLogger->info($exception->getMessage());
                 }
 
                 if ($createOrderShipment) {
@@ -590,10 +598,10 @@ class Data extends AbstractHelper
         $curl->addHeader("X-Delyvax-Access-Token", $delyvaxConfig['delyvax_api_token']);
         $curl->post($apiUrl, json_encode($postRequestArr, JSON_UNESCAPED_SLASHES));
 
-        $this->_logger->debug(var_export('-------------' . $requestActionName . '-------------', true));
-        $this->_logger->debug(var_export(json_encode($postRequestArr, JSON_UNESCAPED_SLASHES), true));
-        $this->_logger->debug(var_export($curl->getStatus(), true));
-        $this->_logger->debug(var_export($curl->getBody(), true));
+        $this->_delyvaLogger->info(var_export('-------------' . $requestActionName . '-------------', true));
+        $this->_delyvaLogger->info(var_export(json_encode($postRequestArr, JSON_UNESCAPED_SLASHES), true));
+        $this->_delyvaLogger->info(var_export($curl->getStatus(), true));
+        $this->_delyvaLogger->info(var_export($curl->getBody(), true));
 
         if ($curl->getStatus() == 200 || $curl->getStatus() == 100) {
             return [

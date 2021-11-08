@@ -20,4 +20,17 @@
             </argument>
         </arguments>
     </virtualType>
+    <type name="Delyvax\Shipment\Logger\Handler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+    <type name="Delyvax\Shipment\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">myLoggerName</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="system" xsi:type="object">Delyvax\Shipment\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
 </config>
