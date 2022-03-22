@@ -90,7 +90,6 @@ class OrderPlaceAfter implements ObserverInterface
             ];
             $process = false;
             $createOrderResponse = $this->_delyvaxHelper->postCreateOrder($origin, $destination, $serviceCode, $cod, $OriginOrderNotes, $process);
-            file_put_contents('var/log/orderPlaceAfter.txt', '\n--------------------------\createOrderResponse: \n'. $order->getIncrementId() . print_r($createOrderResponse, TRUE), FILE_APPEND);
 
             if ($createOrderResponse[DelyvaxHelper::STATUS]) {
                 $createOrderResponse = $createOrderResponse[DelyvaxHelper::RESPONSE];

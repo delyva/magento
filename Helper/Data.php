@@ -476,7 +476,8 @@ class Data extends AbstractHelper
         if ($order->getDelyvaxOrderId() != NULL && $order->getDelyvaxOrderStatus() == self::DELYVAX_SHIPMENT_STATUS_DRAFT) {
             $serviceCode = $this->getServiceCodeFromShippingMethod($order->getShippingMethod());
             $processOrderResponse = $this->processDelyvaxOrder($order->getDelyvaxOrderId(), $serviceCode);
-            file_put_contents('var/log/orderPlaceAfter.txt', '\n--------------------------\processOrderResponse: \n'. $order->getIncrementId() . print_r($processOrderResponse, TRUE), FILE_APPEND);
+            $this->_delyvaLogger->info(var_export('-------------processOrderResponse: '. $order->getIncrementId()  .'-------------', true));
+            $this->_delyvaLogger->info(var_export($processOrderResponse, true));
 
             if ($processOrderResponse[self::STATUS]) {
                 $processOrderResponse = $processOrderResponse[self::RESPONSE];
