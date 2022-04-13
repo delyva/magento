@@ -218,6 +218,9 @@ class Data extends AbstractHelper
             'delyvax_weight_consideration' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_weight_consideration'),
             'delyvax_volumetric_weight_constant' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_volumetric_weight_constant'),
             'delyvax_source' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_source'),
+            'cancel_order_status' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'cancel_order_status'),
+            'cancel_order_in_delvya' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'cancel_order_in_delvya'),
+            'ship_order_with_delvya' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'ship_order_with_delvya'),
             'delyvax_rate_adjustment_flat' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_flat'),
             'delyvax_rate_adjustment_percentage' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_percentage'),
             'delyvax_rate_adjustment_type' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_type')
@@ -446,7 +449,53 @@ class Data extends AbstractHelper
             unset($postRequestArr["serviceCode"]);
         }
 
+        if ($serviceCode == '') {
+            unset($postRequestArr["serviceCode"]);
+        }
+
         return $this->makeRequest($apiUrl, $postRequestArr, 'postCreateOrder');
+    }
+
+    /**
+     * @param string $delyvaxOrderId
+     * @return array
+     */
+    public function cancelDelyvaxOrder(string $delyvaxOrderId)
+    {
+        $apiUrl = self::DELYVAX_API_ENDPOINT . '/order/:orderId/cancel';
+        $apiUrl = str_replace(":orderId", $delyvaxOrderId, $apiUrl);
+        $postRequestArr = '';
+        $delyvaxConfig = $this->getDelyvaxConfig();
+        $accessToken = $delyvaxConfig['delyvax_api_token'];
+        $requestActionName = 'cancelDelyvaxOrder';
+
+        // Can't call the generic function because the postRequestArr is not array in this API call
+        /**@var $curl \Magento\Framework\HTTP\Client\Curl */
+        $curl = $this->clientFactory->create();
+        $curl->addHeader("Authorization", "Bearer $accessToken");
+        $curl->addHeader("content-type", "application/json");
+        $curl->addHeader("X-Delyvax-Access-Token", $delyvaxConfig['delyvax_api_token']);
+        $curl->post($apiUrl, $postRequestArr);
+
+        $this->_delyvaLogger->info(var_export('-------------' . $requestActionName . '-------------', true));
+        $this->_delyvaLogger->info(var_export(json_encode($postRequestArr, JSON_UNESCAPED_SLASHES), true));
+        $this->_delyvaLogger->info(var_export($curl->getStatus(), true));
+        $this->_delyvaLogger->info(var_export($curl->getBody(), true));
+
+        if ($curl->getStatus() == 200 || $curl->getStatus() == 100) {
+            return [
+                self::STATUS => true,
+                self::STATUS_CODE => $curl->getStatus(),
+                self::RESPONSE => json_decode($curl->getBody(), true)
+            ];
+        } else {
+            return [
+                self::STATUS => false,
+                self::STATUS_CODE => $curl->getStatus(),
+                self::RESPONSE => json_decode($curl->getBody(), true)
+            ];
+        }
+        // return $this->makeRequest($apiUrl, $postRequestArr, 'cancelDelyvaxOrder');
     }
 
     /**

@@ -81,8 +81,15 @@ class Tracking extends \Magento\Framework\App\Action\Action implements CsrfAware
                                 if ($order->getStatus() != $status) {
                                     $order->setDelyvaxOrderStatus($status);
                                     if ($delyvaxStatusCode == '900' || $delyvaxStatusCode == '475') {
-                                        // Just add the comment in order history, not change order status
-                                        $order->addCommentToStatusHistory($statusCodesArr[$delyvaxStatusCode]['status_desc']);
+                                        if ($delyvaxConfig['cancel_order_status']) {
+                                            // Add comment, change status and make it visible on FE
+                                            $order->addCommentToStatusHistory($statusCodesArr[$delyvaxStatusCode]['status_desc'], $status, true);
+                                        }
+                                        else {
+                                            // Just add the comment in order history, not change order status
+                                            $order->addCommentToStatusHistory($statusCodesArr[$delyvaxStatusCode]['status_desc']);
+                                        }
+                                        
                                     } else {
                                         // Add comment, change status and make it visible on FE
                                         $order->addCommentToStatusHistory($statusCodesArr[$delyvaxStatusCode]['status_desc'], $status, true);
