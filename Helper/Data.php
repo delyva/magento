@@ -25,7 +25,7 @@ use Magento\Shipping\Model\ShipmentNotifier;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Quote\Model\Quote\Address\RateRequest;
-
+use Delyvax\Shipment\Logger\Logger as DelyvaLogger;
 
 class Data extends AbstractHelper
 {
@@ -110,6 +110,11 @@ class Data extends AbstractHelper
      * @var ProductRepository
      */
     protected $_productRepository;
+
+    /**
+     * @var DelyvaLogger
+     */
+    protected $_delyvaLogger;
     
     /**
      * Data constructor.
@@ -127,6 +132,7 @@ class Data extends AbstractHelper
      * @param ShipmentNotifier $shipmentNotifier
      * @param TrackFactory $trackFactory
      * @param ProductRepository $productRepository
+     * @param DelyvaLogger $logger
      */
     public function __construct(
         Context $context,
@@ -142,7 +148,8 @@ class Data extends AbstractHelper
         ConvertOrder $convertOrder,
         ShipmentNotifier $shipmentNotifier,
         TrackFactory $trackFactory,
-        ProductRepository $productRepository
+        ProductRepository $productRepository,
+        DelyvaLogger $logger
     )
     {
         parent::__construct($context);
@@ -159,6 +166,7 @@ class Data extends AbstractHelper
         $this->_shipmentNotifier = $shipmentNotifier;
         $this->_trackFactory = $trackFactory;
         $this->_productRepository = $productRepository;
+        $this->_delyvaLogger = $logger;
     }
 
     /**
@@ -210,6 +218,9 @@ class Data extends AbstractHelper
             'delyvax_weight_consideration' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_weight_consideration'),
             'delyvax_volumetric_weight_constant' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_volumetric_weight_constant'),
             'delyvax_source' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_source'),
+            'cancel_order_status' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'cancel_order_status'),
+            'cancel_order_in_delvya' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'cancel_order_in_delvya'),
+            'ship_order_with_delvya' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'ship_order_with_delvya'),
             'delyvax_rate_adjustment_flat' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_flat'),
             'delyvax_rate_adjustment_percentage' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_percentage'),
             'delyvax_rate_adjustment_type' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_type')
@@ -438,7 +449,53 @@ class Data extends AbstractHelper
             unset($postRequestArr["serviceCode"]);
         }
 
+        if ($serviceCode == '') {
+            unset($postRequestArr["serviceCode"]);
+        }
+
         return $this->makeRequest($apiUrl, $postRequestArr, 'postCreateOrder');
+    }
+
+    /**
+     * @param string $delyvaxOrderId
+     * @return array
+     */
+    public function cancelDelyvaxOrder(string $delyvaxOrderId)
+    {
+        $apiUrl = self::DELYVAX_API_ENDPOINT . '/order/:orderId/cancel';
+        $apiUrl = str_replace(":orderId", $delyvaxOrderId, $apiUrl);
+        $postRequestArr = '';
+        $delyvaxConfig = $this->getDelyvaxConfig();
+        $accessToken = $delyvaxConfig['delyvax_api_token'];
+        $requestActionName = 'cancelDelyvaxOrder';
+
+        // Can't call the generic function because the postRequestArr is not array in this API call
+        /**@var $curl \Magento\Framework\HTTP\Client\Curl */
+        $curl = $this->clientFactory->create();
+        $curl->addHeader("Authorization", "Bearer $accessToken");
+        $curl->addHeader("content-type", "application/json");
+        $curl->addHeader("X-Delyvax-Access-Token", $delyvaxConfig['delyvax_api_token']);
+        $curl->post($apiUrl, $postRequestArr);
+
+        $this->_delyvaLogger->info(var_export('-------------' . $requestActionName . '-------------', true));
+        $this->_delyvaLogger->info(var_export(json_encode($postRequestArr, JSON_UNESCAPED_SLASHES), true));
+        $this->_delyvaLogger->info(var_export($curl->getStatus(), true));
+        $this->_delyvaLogger->info(var_export($curl->getBody(), true));
+
+        if ($curl->getStatus() == 200 || $curl->getStatus() == 100) {
+            return [
+                self::STATUS => true,
+                self::STATUS_CODE => $curl->getStatus(),
+                self::RESPONSE => json_decode($curl->getBody(), true)
+            ];
+        } else {
+            return [
+                self::STATUS => false,
+                self::STATUS_CODE => $curl->getStatus(),
+                self::RESPONSE => json_decode($curl->getBody(), true)
+            ];
+        }
+        // return $this->makeRequest($apiUrl, $postRequestArr, 'cancelDelyvaxOrder');
     }
 
     /**
@@ -468,7 +525,8 @@ class Data extends AbstractHelper
         if ($order->getDelyvaxOrderId() != NULL && $order->getDelyvaxOrderStatus() == self::DELYVAX_SHIPMENT_STATUS_DRAFT) {
             $serviceCode = $this->getServiceCodeFromShippingMethod($order->getShippingMethod());
             $processOrderResponse = $this->processDelyvaxOrder($order->getDelyvaxOrderId(), $serviceCode);
-            file_put_contents('var/log/orderPlaceAfter.txt', '\n--------------------------\processOrderResponse: \n'. $order->getIncrementId() . print_r($processOrderResponse, TRUE), FILE_APPEND);
+            $this->_delyvaLogger->info(var_export('-------------processOrderResponse: '. $order->getIncrementId()  .'-------------', true));
+            $this->_delyvaLogger->info(var_export($processOrderResponse, true));
 
             if ($processOrderResponse[self::STATUS]) {
                 $processOrderResponse = $processOrderResponse[self::RESPONSE];
@@ -484,7 +542,7 @@ class Data extends AbstractHelper
                     $order->addData($orderRespData);
                     $this->_resourceOrder->save($order);
                 } catch (LocalizedException | \Exception $exception) {
-                    $this->_logger->critical($exception->getMessage());
+                    $this->_delyvaLogger->info($exception->getMessage());
                 }
 
                 if ($createOrderShipment) {
@@ -590,10 +648,10 @@ class Data extends AbstractHelper
         $curl->addHeader("X-Delyvax-Access-Token", $delyvaxConfig['delyvax_api_token']);
         $curl->post($apiUrl, json_encode($postRequestArr, JSON_UNESCAPED_SLASHES));
 
-        $this->_logger->debug(var_export('-------------' . $requestActionName . '-------------', true));
-        $this->_logger->debug(var_export(json_encode($postRequestArr, JSON_UNESCAPED_SLASHES), true));
-        $this->_logger->debug(var_export($curl->getStatus(), true));
-        $this->_logger->debug(var_export($curl->getBody(), true));
+        $this->_delyvaLogger->info(var_export('-------------' . $requestActionName . '-------------', true));
+        $this->_delyvaLogger->info(var_export(json_encode($postRequestArr, JSON_UNESCAPED_SLASHES), true));
+        $this->_delyvaLogger->info(var_export($curl->getStatus(), true));
+        $this->_delyvaLogger->info(var_export($curl->getBody(), true));
 
         if ($curl->getStatus() == 200 || $curl->getStatus() == 100) {
             return [

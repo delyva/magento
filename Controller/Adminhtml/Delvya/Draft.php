@@ -1,54 +1,67 @@
 <?php
-namespace Delyvax\Shipment\Observer;
+/**
+ *
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+namespace Delyvax\Shipment\Controller\Adminhtml\Delvya;
 
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Quote\Model\QuoteRepository;
 use Delyvax\Shipment\Helper\Data as DelyvaxHelper;
 use Psr\Log\LoggerInterface;
+use Magento\Sales\Model\OrderFactory;
+use Magento\Quote\Model\QuoteRepository;
 use Magento\Sales\Model\ResourceModel\Order as ResourceOrder;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\App\Action\HttpGetActionInterface as HttpGetActionInterface;
 
-class OrderPlaceAfter implements ObserverInterface
+class Draft extends \Magento\Backend\App\Action
 {
-    /**
-     * @var QuoteRepository
-     */
-    protected $_quoteRepository;
     /**
      * @var DelyvaxHelper
      */
     protected $_delyvaxHelper;
+
     /**
      * @var LoggerInterface
      */
-    protected $logger;
+    protected $_logger;
+
+    /**
+     * @var OrderRepositoryInterface
+     */
+    protected $orderFactory;
+
     /**
      * @var ResourceOrder
      */
     private $_resourceOrder;
 
+     /**
+     * @var QuoteRepository
+     */
+    protected $_quoteRepository;
+
     public function __construct(
-        QuoteRepository $quoteRepository,
+        \Magento\Backend\App\Action\Context $context,
         DelyvaxHelper $delyvaxHelper,
         LoggerInterface $logger,
+        OrderFactory $orderFactory,
+        QuoteRepository $quoteRepository,
         ResourceOrder $resourceOrder
     ) {
-        $this->_quoteRepository = $quoteRepository;
         $this->_delyvaxHelper = $delyvaxHelper;
         $this->logger = $logger;
+        $this->orderFactory = $orderFactory;
+        $this->_quoteRepository = $quoteRepository;
         $this->_resourceOrder = $resourceOrder;
+        parent::__construct($context);
     }
-
-    /**
-     * @throws LocalizedException
-     */
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    public function execute()
     {
-        $order = $observer->getEvent()->getOrder();
-
-        // check if selected shipping method is delyvax
-        if (strpos($order->getShippingMethod(), DelyvaxHelper::DELYVAX_SHIPMENT_CODE) !== false) {
+        $orderId = $this->getRequest()->getParam('order_id');
+        $order = $this->orderFactory->create()->load($orderId);
+        
+        if (strpos($order->getShippingMethod(), DelyvaxHelper::DELYVAX_SHIPMENT_CODE) === false) {
             try {
                 $quote = $this->_quoteRepository->get($order->getQuoteId());
             } catch (NoSuchEntityException $e) {
@@ -80,8 +93,7 @@ class OrderPlaceAfter implements ObserverInterface
                 "note" => $destinationOrderNotes
             ];
 
-            $serviceCode = $this->_delyvaxHelper->getServiceCodeFromShippingMethod($order->getShippingMethod());
-            
+            $serviceCode = '';
             // check payment method and set codAmount
             $codAmount = ($order->getPayment()->getMethod() === \Magento\OfflinePayments\Model\Cashondelivery::PAYMENT_METHOD_CASHONDELIVERY_CODE) ? $order->getGrandTotal() : 0;
             $cod = [
@@ -104,11 +116,13 @@ class OrderPlaceAfter implements ObserverInterface
                 try {
                     $order->addData($orderRespData);
                     $this->_resourceOrder->save($order);
+                    $this->messageManager->addSuccess(__('You created the shipping draft with delvya.'));
                 } catch (LocalizedException | \Exception $exception) {
                     $this->logger->critical($exception->getMessage());
                 }
             }
         }
-
+        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
+        return $resultRedirect->setPath('sales/order/view', ['order_id' => $orderId]);
     }
 }

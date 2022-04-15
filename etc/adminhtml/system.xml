@@ -83,6 +83,21 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Create webhook on DelyvaX customer profile pointing to your store url e.g. https://kedai.matdespatch.com</comment>
                     </field>
+                    <field id="cancel_order_status" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Cancel Order Status</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Order Status will be cancel if Delvya shipping status will be cancel or failure</comment>
+                    </field>
+                    <field id="cancel_order_in_delvya" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Cancel Order in Delvya</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Order Status will be cancel in Delvya if order will be cancel from Magento</comment>
+                    </field>
+                    <field id="ship_order_with_delvya" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Ship order with Delvya</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>The order can ship with delvya even if it is not placed with delvya</comment>
+                    </field>
                     <field id="delyvax_processing_days" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Processing days</label>
                         <comment>Number of processing days. e.g. 0 - same day ship out; 1 - next day ship out.</comment>

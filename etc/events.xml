@@ -12,4 +12,10 @@
     <event name="admin_system_config_changed_section_carriers">
         <observer name="custom_admin_system_config_changed_section_carriers" instance="Delyvax\Shipment\Observer\CarriersConfigSave"/>
     </event>
+    <event name="order_cancel_after">
+        <observer name="delyvax_order_cancel_event" instance="Delyvax\Shipment\Observer\OrderCancel"/>
+    </event>
+    <event name="sales_order_payment_refund">
+        <observer name="delyvax_order_refund_event" instance="Delyvax\Shipment\Observer\OrderRefund"/>
+    </event>
 </config>
