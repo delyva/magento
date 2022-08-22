@@ -26,6 +26,7 @@ use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Delyvax\Shipment\Logger\Logger as DelyvaLogger;
+use Magento\Directory\Model\RegionFactory;
 
 class Data extends AbstractHelper
 {
@@ -115,6 +116,11 @@ class Data extends AbstractHelper
      * @var DelyvaLogger
      */
     protected $_delyvaLogger;
+
+    /**
+     * @var RegionFactory
+     */
+    protected $_regionFactory;
     
     /**
      * Data constructor.
@@ -133,6 +139,7 @@ class Data extends AbstractHelper
      * @param TrackFactory $trackFactory
      * @param ProductRepository $productRepository
      * @param DelyvaLogger $logger
+     * @param RegionFactory $regionFactory
      */
     public function __construct(
         Context $context,
@@ -149,7 +156,8 @@ class Data extends AbstractHelper
         ShipmentNotifier $shipmentNotifier,
         TrackFactory $trackFactory,
         ProductRepository $productRepository,
-        DelyvaLogger $logger
+        DelyvaLogger $logger,
+        RegionFactory $regionFactory
     )
     {
         parent::__construct($context);
@@ -167,6 +175,7 @@ class Data extends AbstractHelper
         $this->_trackFactory = $trackFactory;
         $this->_productRepository = $productRepository;
         $this->_delyvaLogger = $logger;
+        $this->_regionFactory = $regionFactory;
     }
 
     /**
@@ -248,7 +257,7 @@ class Data extends AbstractHelper
             'address1' => $this->scopeConfig->getValue('shipping/origin/street_line1'),
             'address2' => $this->scopeConfig->getValue('shipping/origin/street_line2'),
             'city' => $this->scopeConfig->getValue('shipping/origin/city'),
-            'state' => $this->scopeConfig->getValue('shipping/origin/region_id'),
+            'state' => $this->getStateById($this->scopeConfig->getValue('shipping/origin/region_id')),
             'postcode' => $this->scopeConfig->getValue('shipping/origin/postcode'),
             'country' => $this->scopeConfig->getValue('shipping/origin/country_id'),
         ];
@@ -684,6 +693,20 @@ class Data extends AbstractHelper
             'dx-failed-delivery' => 'Delivery failed',
             'dx-request-refund' => 'Request refund'
         ];
+    }
+
+    /**
+     * @param string $regionId
+     * @return string
+     */
+    public function getStateById($regionId) : string
+    {
+        $region = $this->_regionFactory->create()->load($regionId);
+        if ($region->getData('default_name')) {
+            return $region->getData('default_name');
+        } else {
+            return $regionId;
+        }
     }
 
 }

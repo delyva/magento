@@ -140,11 +140,11 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         // file_put_contents('var/log/shipping_request.json', '--------------------------\nRequest: \n'.json_encode($request->getData(), JSON_PRETTY_PRINT).PHP_EOL, FILE_APPEND);
 
         $destination = [
-            "address1" => $st1,
-            "address2" => $st2,
-            "city" => $request->getDestCity(),
+            "address1" => (string) $st1,
+            "address2" => (string) $st2,
+            "city" => (string) $request->getDestCity(),
             "state" => $request->getDestRegionCode(),
-            "state2" => $request->getDestRegionId(),
+            "state2" => $this->_delyvaxHelper->getStateById($request->getDestRegionId()),
             "postcode" => $request->getDestPostcode(),
             "country" => $request->getDestCountryId()
         ];
