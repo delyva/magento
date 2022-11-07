@@ -1,6 +1,6 @@
 # Magento 2 DelyvaX Dynamic Shipping rates extension/plugin
 
-This module integrate Magento 2 with DelyvaX Shipment to enable fetching shipping rates from Delyvax Shipment dynamically. Tested on Magento version  v2.3.5 until 2.4.2.
+This module integrate Magento 2 with DelyvaX Shipment to enable fetching shipping rates from Delyvax Shipment dynamically. Tested on Magento version  v2.3.5 - 2.4.2.
 
 ## Install Magento 2 DelyvaX Dynamic Shipping rates extension
 Download the code and place it inside `magento_root/app/code/DelyvaX/Shipment/`
