@@ -318,7 +318,7 @@ class Data extends AbstractHelper
                     "currency" => $orderCurrencyCode,
                 ),
                 "weight" => array(
-                    "value" => (int) ($item->getWeight() * $item->getQty()),
+                    "value" => (int) $item->getWeight(),
                     "unit" => "kg"
                 ),
                 "quantity" => (int) $item->getQty(),
