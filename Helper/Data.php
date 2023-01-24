@@ -254,11 +254,11 @@ class Data extends AbstractHelper
     public function getOriginShippingAddress() : array
     {
         return [
-            'address1' => $this->scopeConfig->getValue('shipping/origin/street_line1'),
-            'address2' => $this->scopeConfig->getValue('shipping/origin/street_line2'),
-            'city' => $this->scopeConfig->getValue('shipping/origin/city'),
+            'address1' => (string) $this->scopeConfig->getValue('shipping/origin/street_line1'),
+            'address2' => (string) $this->scopeConfig->getValue('shipping/origin/street_line2'),
+            'city' => (string) $this->scopeConfig->getValue('shipping/origin/city'),
             'state' => $this->getStateById($this->scopeConfig->getValue('shipping/origin/region_id')),
-            'postcode' => $this->scopeConfig->getValue('shipping/origin/postcode'),
+            'postcode' => (string) $this->scopeConfig->getValue('shipping/origin/postcode'),
             'country' => $this->scopeConfig->getValue('shipping/origin/country_id'),
         ];
     }
@@ -318,7 +318,7 @@ class Data extends AbstractHelper
                     "currency" => $orderCurrencyCode,
                 ),
                 "weight" => array(
-                    "value" => (int) $item->getWeight(),
+                    "value" => number_format($item->getWeight(), 2),
                     "unit" => "kg"
                 ),
                 "quantity" => (int) $item->getQty(),
