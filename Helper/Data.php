@@ -411,14 +411,25 @@ class Data extends AbstractHelper
     public function getDestinationContact(Order $order): array
     {
         $shippingAddress = $order->getShippingAddress()->getData();
-        $address = explode(PHP_EOL, $shippingAddress['street']);
+
+        //$address = explode(PHP_EOL, $shippingAddress['street']);
+        $streetAddress = preg_split('/\r\n|\r|\n/', $shippingAddress['street']);
+        $st1 = (isset($streetAddress[0])) ? $streetAddress[0] : '-';
+        $st2 = '-';
+        if (isset($streetAddress[1])) {
+            $st2 = $streetAddress[1];
+            if (isset($streetAddress[2])) {
+                $st2 = $st2 . ' ' . $streetAddress[2];
+            }
+        }
+
         $destinationContact = [
             'name' => $shippingAddress['firstname'] . ' ' . $shippingAddress['lastname'],
             "email" => $shippingAddress['email'],
             "phone" => $shippingAddress['telephone'],
             "mobile" => $shippingAddress['telephone'],
-            "address1" => (array_key_exists(0, $address)) ? $address[0] : $shippingAddress['street'],
-            "address2" => (array_key_exists(1, $address)) ? $address[1] : '-',
+            "address1" => (string) $st1,
+            "address2" => (string) $st2,
             "city" => $shippingAddress['city'],
             "state" => $shippingAddress['region'],
             "postcode" => $shippingAddress['postcode'],
