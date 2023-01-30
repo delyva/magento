@@ -143,18 +143,18 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
             "address1" => (string) $st1,
             "address2" => (string) $st2,
             "city" => (string) $request->getDestCity(),
-            "state" => $request->getDestRegionCode(),
-            "state2" => $this->_delyvaxHelper->getStateById($request->getDestRegionId()),
+            //"state" => $request->getDestRegionCode(),
+            "state" => $this->_delyvaxHelper->getStateById($request->getDestRegionId()),
             "postcode" => $request->getDestPostcode(),
             "country" => $request->getDestCountryId()
         ];
 
-        if ($destination["state"] == null || strlen($destination["state"]) < 1) {
+        /*if ($destination["state"] == null || strlen($destination["state"]) < 1) {
             unset($destination["state"]);
         }
         if ($destination["state2"] == null || strlen($destination["state2"]) < 1) {
             unset($destination["state2"]);
-        }
+        }*/
         
         $totalWeight = $this->_delyvaxHelper->calculateWeightBasedOnDelyvaxSettings($request);
         $weight = [
