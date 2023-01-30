@@ -450,7 +450,7 @@ class Data extends AbstractHelper
      * @param bool $process
      * @return array
      */
-    public function postCreateOrder(array $origin, array $destination, string $serviceCode, array $cod, string $orderNotes, bool $process = false): array
+    public function postCreateOrder(array $origin, array $destination, string $serviceCode, array $cod, string $orderNotes, bool $process = false, string $orderIncrementId): array
     {
         $apiUrl = self::DELYVAX_API_ENDPOINT . '/order';
         $delyvaxConfig = $this->getDelyvaxConfig();
@@ -458,6 +458,7 @@ class Data extends AbstractHelper
             "customerId" => $delyvaxConfig['delyvax_customer_id'],
             'process' => $process,
             'serviceCode' => $serviceCode,
+            'referenceNo' => $orderIncrementId,
             'origin' => $origin,
             'destination' => $destination,
             'note' => $orderNotes,

@@ -101,7 +101,7 @@ class Draft extends \Magento\Backend\App\Action
                 "currency" => $order->getOrderCurrencyCode()
             ];
             $process = false;
-            $createOrderResponse = $this->_delyvaxHelper->postCreateOrder($origin, $destination, $serviceCode, $cod, $OriginOrderNotes, $process);
+            $createOrderResponse = $this->_delyvaxHelper->postCreateOrder($origin, $destination, $serviceCode, $cod, $OriginOrderNotes, $process, $order->getIncrementId());
 
             if ($createOrderResponse[DelyvaxHelper::STATUS]) {
                 $createOrderResponse = $createOrderResponse[DelyvaxHelper::RESPONSE];
