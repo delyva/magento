@@ -121,16 +121,6 @@
                         <source_model>Delyvax\Shipment\Model\Config\Source\DefaultItemType</source_model>
                         <comment>Default task - package item type. e.g. DOCUMENT / PARCEL / FOOD / PACKAGE.</comment>
                     </field>
-                    <field id="delyvax_weight_consideration" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Weight Consideration</label>
-                        <source_model>Delyvax\Shipment\Model\Config\Source\WeightConsideration</source_model>
-                        <comment>e.g. BEST-Whichever is higher / ACTUAL-Actual Weight / VOL-Volumetric Weight </comment>
-                    </field>
-                    <field id="delyvax_volumetric_weight_constant" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Volumetric Weight Constant</label>
-                        <source_model>Delyvax\Shipment\Model\Config\Source\VolumetricWeightConstant</source_model>
-                        <comment>e.g. 1000 / 5000 / 6000</comment>
-                    </field>
                     <field id="delyvax_source" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                         <label>Source of</label>
                         <comment>Leave empty of type 'magento' or your web design agency code.</comment>

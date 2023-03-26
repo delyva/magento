@@ -181,9 +181,10 @@ class Data extends AbstractHelper
     /**
      * @param $destination array
      * @param $weight array
+     * @param $inventory array
      * @return array
      */
-    public function getPriceQuote(array $destination, array $weight): array
+    public function getPriceQuote(array $destination, array $weight, array $inventory): array
     {
         $apiUrl = self::DELYVAX_API_ENDPOINT . '/service/instantQuote';
         $delyvaxConfig = $this->getDelyvaxConfig();
@@ -194,7 +195,8 @@ class Data extends AbstractHelper
             'origin' => $origin,
             'destination' => $destination,
             "weight" => $weight,
-            "itemType" => $delyvaxConfig['delyvax_item_type']
+            "itemType" => $delyvaxConfig['delyvax_item_type'],
+            'inventory' => $inventory
         ];
         return $this->makeRequest($apiUrl, $postRequestArr, 'getPriceQuote');
     }
@@ -224,8 +226,6 @@ class Data extends AbstractHelper
             'delyvax_processing_time' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_processing_time'),
             'delyvax_split_tasks' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_split_tasks'),
             'delyvax_task_item_type' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_task_item_type'),
-            'delyvax_weight_consideration' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_weight_consideration'),
-            'delyvax_volumetric_weight_constant' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_volumetric_weight_constant'),
             'delyvax_source' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'delyvax_source'),
             'cancel_order_status' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'cancel_order_status'),
             'cancel_order_in_delvya' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'cancel_order_in_delvya'),
@@ -265,34 +265,20 @@ class Data extends AbstractHelper
 
     /**
      * @param RateRequest $request
-     * @return int | float
+     * @return array
      */
-    public function calculateWeightBasedOnDelyvaxSettings(RateRequest $request)
+    public function getInventoryNodeForCartItemsWeightVolume(RateRequest $request)
     {
-        $totalWeight = $request->getPackageWeight();
-        $delyvaxConfig = $this->getDelyvaxConfig();
-        if ($delyvaxConfig['delyvax_weight_consideration'] == 'ACTUAL') {
-            return $totalWeight;
-        } else {
-            $totalDimension = 0;
-            foreach ($request->getAllItems() as $item) {
-                $product = $this->_productRepository->getById($item->getProduct()->getId());
-                $totalDimension = $totalDimension + ($product->getLength() * $product->getWidth() * $product->getHeight());
-            }
-            $totalActualWeight = $totalWeight;
-            $volumetricConstant = $delyvaxConfig['delyvax_volumetric_weight_constant'];
-
-            //calculate volumetric weight
-            $totalVolumetricWeight = ($totalDimension > 0) ? $totalDimension / $volumetricConstant : $totalActualWeight;
-            if ($delyvaxConfig['delyvax_weight_consideration'] == 'VOL') {
-                return $totalVolumetricWeight;
-            } else {
-                $totalWeight = ($totalActualWeight > $totalVolumetricWeight) ? $totalActualWeight : $totalVolumetricWeight;
-                return $totalWeight;
-            }
+        $inventory = array();
+        foreach ($request->getAllItems() as $item) {
+            $product = $this->_productRepository->getById($item->getProduct()->getId());
+            $inventory[] = array(
+                'weight' => array('value' => (float)$item->getWeight(), 'unit' => 'kg'),
+                'dimension' => array('unit' => 'cm', 'width' => (float)$product->getWidth(), 'length' => (float)$product->getLength(), 'height' => (float)$product->getHeight()),
+                'quantity' => $item->getQty()
+            );
         }
-        // file_put_contents('var/log/request_allItems.json', '--------------------------\nrequest->getAllItems(): \n'.json_encode($arr, JSON_PRETTY_PRINT).PHP_EOL, FILE_APPEND);
-        
+        return $inventory;
     }
 
     /**

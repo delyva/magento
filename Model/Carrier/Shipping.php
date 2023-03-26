@@ -156,13 +156,14 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
             unset($destination["state2"]);
         }*/
         
-        $totalWeight = $this->_delyvaxHelper->calculateWeightBasedOnDelyvaxSettings($request);
         $weight = [
             "unit" => "kg",
-            "value" => $totalWeight
+            "value" => $request->getPackageWeight()
         ];
 
-        $rates = $this->_delyvaxHelper->getPriceQuote($destination, $weight);
+        $inventory = $this->_delyvaxHelper->getInventoryNodeForCartItemsWeightVolume($request);
+
+        $rates = $this->_delyvaxHelper->getPriceQuote($destination, $weight, $inventory);
 
         /** @var \Magento\Shipping\Model\Rate\Result $result */
         $result = $this->_rateFactory->create();
