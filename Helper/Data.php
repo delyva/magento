@@ -47,6 +47,8 @@ class Data extends AbstractHelper
 
     const DELYVAX_SHIPMENT_STATUS_DRAFT = 'draft';
 
+    const ATTR_IS_ITEM_FRESH = 'is_item_fresh';
+
     /**
      * @var Curl
      */

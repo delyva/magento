@@ -7,6 +7,7 @@ use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\DB\Ddl\Table;
 use Magento\Eav\Setup\EavSetupFactory;
+use Delyvax\Shipment\Helper\Data as DelyvaxHelper;
 
 class UpgradeData implements UpgradeDataInterface
 {
@@ -159,6 +160,47 @@ class UpgradeData implements UpgradeDataInterface
                         'apply_to' => ''
                     ]
                 );
+            }
+        }
+
+        if (version_compare($context->getVersion(), "2.2.0", "<")) {
+            if (!$eavSetup->getAttributeId(\Magento\Catalog\Model\Product::ENTITY, DelyvaxHelper::ATTR_IS_ITEM_FRESH)) {
+                $eavSetup->addAttribute(
+                    \Magento\Catalog\Model\Product::ENTITY,
+                    DelyvaxHelper::ATTR_IS_ITEM_FRESH,
+                    [
+                        'type' => 'int',
+                        'frontend' => '',
+                        'label' => 'Is Item Fresh',
+                        'input' => 'boolean',
+                        'backend' => \Magento\Catalog\Model\Product\Attribute\Backend\Boolean::class,
+                        'source' => \Magento\Catalog\Model\Product\Attribute\Source\Boolean::class,
+                        'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
+                        'visible' => true,
+                        'required' => false,
+                        'user_defined' => true,
+                        'default' => 0,
+                        'visible_on_front' => false,
+                        'unique' => false,
+                        'is_used_in_grid' => true,
+                        'sort_order' => 49
+                    ]
+                );
+            }
+            $attributeSetId = $eavSetup->getDefaultAttributeSetId(\Magento\Catalog\Model\Product::ENTITY);
+
+            $entityTypeId = $eavSetup->getEntityTypeId(\Magento\Catalog\Model\Product::ENTITY);
+            $attributeSetIds = $eavSetup->getAllAttributeSetIds($entityTypeId);
+            foreach ($attributeSetIds as $attributeSetId) {
+                if ($attributeSetId) {
+                    $eavSetup->addAttributeToGroup(
+                        \Magento\Catalog\Model\Product::ENTITY,
+                        $attributeSetId,
+                        'Default',
+                        DelyvaxHelper::ATTR_IS_ITEM_FRESH,
+                        99
+                    );
+                }
             }
         }
 
