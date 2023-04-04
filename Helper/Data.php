@@ -27,6 +27,7 @@ use Magento\Catalog\Model\ProductRepository;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Delyvax\Shipment\Logger\Logger as DelyvaLogger;
 use Magento\Directory\Model\RegionFactory;
+use Magento\Checkout\Model\Cart;
 
 class Data extends AbstractHelper
 {
@@ -48,6 +49,7 @@ class Data extends AbstractHelper
     const DELYVAX_SHIPMENT_STATUS_DRAFT = 'draft';
 
     const ATTR_IS_ITEM_FRESH = 'is_item_fresh';
+    const FRESH_ITEM_TYPE = 'PACKAGE';
 
     /**
      * @var Curl
@@ -123,6 +125,11 @@ class Data extends AbstractHelper
      * @var RegionFactory
      */
     protected $_regionFactory;
+
+    /**
+     * @var RegionFactory
+     */
+    protected $_cart;
     
     /**
      * Data constructor.
@@ -142,6 +149,7 @@ class Data extends AbstractHelper
      * @param ProductRepository $productRepository
      * @param DelyvaLogger $logger
      * @param RegionFactory $regionFactory
+     * @param Cart $cart
      */
     public function __construct(
         Context $context,
@@ -159,7 +167,8 @@ class Data extends AbstractHelper
         TrackFactory $trackFactory,
         ProductRepository $productRepository,
         DelyvaLogger $logger,
-        RegionFactory $regionFactory
+        RegionFactory $regionFactory,
+        Cart $cart
     )
     {
         parent::__construct($context);
@@ -178,6 +187,7 @@ class Data extends AbstractHelper
         $this->_productRepository = $productRepository;
         $this->_delyvaLogger = $logger;
         $this->_regionFactory = $regionFactory;
+        $this->_cart = $cart;
     }
 
     /**
@@ -197,7 +207,7 @@ class Data extends AbstractHelper
             'origin' => $origin,
             'destination' => $destination,
             "weight" => $weight,
-            "itemType" => $delyvaxConfig['delyvax_item_type'],
+            "itemType" => ($this->isFreshItemInCart()) ? self::FRESH_ITEM_TYPE : $delyvaxConfig['delyvax_item_type'],
             'inventory' => $inventory
         ];
         return $this->makeRequest($apiUrl, $postRequestArr, 'getPriceQuote');
@@ -292,6 +302,7 @@ class Data extends AbstractHelper
     {
         $inventories = array();
         $delyvaxConfig = $this->getDelyvaxConfig();
+        $delyvaxItemType = ($this->isFreshItemInCart()) ? self::FRESH_ITEM_TYPE : $delyvaxConfig['delyvax_item_type'];
         foreach ($quote->getAllVisibleItems() as $item) {
             // Skip if item type is Virtual/Downloadable, (removed condition - or item weight is less than or equal to 0, that is $item->getWeight() <= 0
             if ($item->getProductType() == \Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE
@@ -300,7 +311,7 @@ class Data extends AbstractHelper
             }
             $inventories[] = [
                 "name" => $item->getName(),
-                "type" => $delyvaxConfig['delyvax_item_type'],
+                "type" => $delyvaxItemType,
                 "price" => array(
                     "amount" => (string)$item->getPrice(),
                     "currency" => $orderCurrencyCode,
@@ -707,6 +718,20 @@ class Data extends AbstractHelper
         } else {
             return $regionId;
         }
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFreshItemInCart()
+    {
+        foreach($this->_cart->getItems() as $item) {
+            $product = $this->_productRepository->getById($item->getProduct()->getId());
+            if($product->getData(self::ATTR_IS_ITEM_FRESH) == 1) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

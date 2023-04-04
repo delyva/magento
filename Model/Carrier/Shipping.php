@@ -137,7 +137,6 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
                 $st2 = $st2 . ' ' . $streetAddress[2];
             }
         }
-        // file_put_contents('var/log/shipping_request.json', '--------------------------\nRequest: \n'.json_encode($request->getData(), JSON_PRETTY_PRINT).PHP_EOL, FILE_APPEND);
 
         $destination = [
             "address1" => (string) $st1,
@@ -149,13 +148,6 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
             "country" => $request->getDestCountryId()
         ];
 
-        /*if ($destination["state"] == null || strlen($destination["state"]) < 1) {
-            unset($destination["state"]);
-        }
-        if ($destination["state2"] == null || strlen($destination["state2"]) < 1) {
-            unset($destination["state2"]);
-        }*/
-        
         $weight = [
             "unit" => "kg",
             "value" => $request->getPackageWeight()
