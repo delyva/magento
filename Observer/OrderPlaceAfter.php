@@ -89,7 +89,7 @@ class OrderPlaceAfter implements ObserverInterface
                 "currency" => $order->getOrderCurrencyCode()
             ];
             $process = false;
-            $createOrderResponse = $this->_delyvaxHelper->postCreateOrder($origin, $destination, $serviceCode, $cod, $OriginOrderNotes, $process, $order->getIncrementId());
+            $createOrderResponse = $this->_delyvaxHelper->postCreateOrder($origin, $destination, $serviceCode, $cod, $OriginOrderNotes, $order->getIncrementId(), $process);
 
             if ($createOrderResponse[DelyvaxHelper::STATUS]) {
                 $createOrderResponse = $createOrderResponse[DelyvaxHelper::RESPONSE];
