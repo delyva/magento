@@ -127,7 +127,7 @@ class Data extends AbstractHelper
     protected $_regionFactory;
 
     /**
-     * @var RegionFactory
+     * @var Cart
      */
     protected $_cart;
     
@@ -449,7 +449,7 @@ class Data extends AbstractHelper
      * @param bool $process
      * @return array
      */
-    public function postCreateOrder(array $origin, array $destination, string $serviceCode, array $cod, string $orderNotes, bool $process = false, string $orderIncrementId): array
+    public function postCreateOrder(array $origin, array $destination, string $serviceCode, array $cod, string $orderNotes, string $orderIncrementId, bool $process = false): array
     {
         $apiUrl = self::DELYVAX_API_ENDPOINT . '/order';
         $delyvaxConfig = $this->getDelyvaxConfig();

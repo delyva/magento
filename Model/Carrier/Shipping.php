@@ -142,8 +142,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
             "address1" => (string) $st1,
             "address2" => (string) $st2,
             "city" => (string) $request->getDestCity(),
-            //"state" => $request->getDestRegionCode(),
-            "state" => $this->_delyvaxHelper->getStateById($request->getDestRegionId()),
+            "state" => ($request->getDestRegionId()) ? $this->_delyvaxHelper->getStateById($request->getDestRegionId()) : $request->getDestRegionCode(),
             "postcode" => $request->getDestPostcode(),
             "country" => $request->getDestCountryId()
         ];
