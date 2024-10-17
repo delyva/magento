@@ -80,6 +80,11 @@ class Tracking extends \Magento\Framework\App\Action\Action implements CsrfAware
                                 $status = $statusCodesArr[$delyvaxStatusCode]['status'];
                                 if ($order->getStatus() != $status) {
                                     $order->setDelyvaxOrderStatus($status);
+
+                                    if($delyvaxStatusCode == '100') {
+                                        $this->_delyvaxHelper->createOrUpdateShipment($order, $data['consignmentNo']);
+                                    }
+
                                     if ($delyvaxStatusCode == '900' || $delyvaxStatusCode == '475') {
                                         if ($delyvaxConfig['cancel_order_status']) {
                                             // Add comment, change status and make it visible on FE
@@ -89,7 +94,7 @@ class Tracking extends \Magento\Framework\App\Action\Action implements CsrfAware
                                             // Just add the comment in order history, not change order status
                                             $order->addCommentToStatusHistory($statusCodesArr[$delyvaxStatusCode]['status_desc']);
                                         }
-                                        
+
                                     } else {
                                         // Add comment, change status and make it visible on FE
                                         $order->addCommentToStatusHistory($statusCodesArr[$delyvaxStatusCode]['status_desc'], $status, true);
@@ -112,6 +117,7 @@ class Tracking extends \Magento\Framework\App\Action\Action implements CsrfAware
     {
         /* '<<statusCode>>' => ['<<order-status>>', '<<status-description>>'] */
         return [
+            '100' => ['status' => 'dx-order-created', 'status_desc' => 'Order has been created.'],
             '200' => ['status' => 'dx-courier-accepted', 'status_desc' => 'Order status changed to Courier accepted.'],
             '400' => ['status' => 'dx-start-collecting', 'status_desc' => 'Order status changed to Pending pick up.'],
             '475' => ['status' => 'dx-failed-collection', 'status_desc' => 'Order status changed to Pick up failed.'],
