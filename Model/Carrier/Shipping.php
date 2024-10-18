@@ -1,6 +1,8 @@
 <?php
 namespace Delyvax\Shipment\Model\Carrier;
 
+use Delyvax\Shipment\Model\Config\Source\RateAdjustmentForm;
+use Delyvax\Shipment\Model\Config\Source\RateAdjustmentType;
 use Magento\Framework\Xml\Security;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Magento\Shipping\Model\Rate\Result;
@@ -13,17 +15,6 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
      * @var string
      */
     protected $_code = 'delyvax_shipment';
-
-    /**
-     * @var DelyvaxHelper
-     */
-    protected $_delyvaxHelper;
-
-    /**
-     * @var \Magento\Customer\Model\Session
-     */
-    protected $customerSession;
-
     /**
      * Shipping constructor.
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
@@ -88,6 +79,16 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     }
 
     /**
+     * @var DelyvaxHelper
+     */
+    protected $_delyvaxHelper;
+
+    /**
+     * @var \Magento\Customer\Model\Session
+     */
+    protected $customerSession;
+
+    /**
      * get allowed methods
      * @return array
      */
@@ -122,7 +123,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         if (!$this->getConfigFlag('active')) {
             return false;
         }
-        
+
         $delyvaxConfig = $this->_delyvaxHelper->getDelyvaxConfig();
         if ($delyvaxConfig['show_dynamic_rates_on_checkout'] == 0) {
             return $this->getDelyvaxFlatShippingMethod();
@@ -163,14 +164,44 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
             $services = $rates[DelyvaxHelper::RESPONSE]['data']['services'];
             foreach ($services as $shipper) {
                 if (isset($shipper['service']['name'])) {
-                    $ra_percentage = $delyvaxConfig['delyvax_rate_adjustment_percentage'] ?? 1;
-                    $percentRate = $ra_percentage / 100 * $shipper['price']['amount'];
-                    $flatRate = $delyvaxConfig['delyvax_rate_adjustment_flat'] ?? 0;
-                    if ($delyvaxConfig['delyvax_rate_adjustment_type'] == \Delyvax\Shipment\Model\Config\Source\RateAdjustmentType::DISCOUNT) {
-                        $cost = round($shipper['price']['amount'] - $percentRate - $flatRate, 2);
-                    } else {
-                        $cost = round($shipper['price']['amount'] + $percentRate + $flatRate, 2);
+                    $cost = $shipper['price']['amount'];
+
+                    if ($delyvaxConfig['delyvax_rate_adjustment_enabled']) {
+                        $items = $request->getAllItems();
+                        $ruleId = $delyvaxConfig['delyvax_rate_adjustment_rule'];
+                        $shipperCode = $shipper['service']['code'];
+                        $allowedShippers = explode(',', $delyvaxConfig['delyvax_rate_adjustment_service_providers']);
+
+                        if (in_array($shipperCode, $allowedShippers) || in_array('*', $allowedShippers)) {
+                            foreach ($items as $item) {
+                                $appliedRules = explode(',', $item->getAppliedRuleIds());
+                                if (is_null($ruleId) || in_array($ruleId, $appliedRules)) {;
+                                    $adjustmentAmount = $delyvaxConfig['delyvax_rate_adjustment_amount'] ?? 0;
+
+                                    if ($delyvaxConfig['delyvax_rate_adjustment_form'] == RateAdjustmentForm::PERCENTAGE) {
+                                        $percentRate = ($adjustmentAmount / 100) * $shipper['price']['amount'];
+                                        if ($delyvaxConfig['delyvax_rate_adjustment_type'] == RateAdjustmentType::MARKUP) {
+                                            // Markup: cost = original_cost + (adjustmentAmount / 100) * original_cost
+                                            $cost = round($shipper['price']['amount'] + $percentRate, 2);
+                                        } else {
+                                            // Discount: cost = original_cost - (adjustmentAmount / 100) * original_cost
+                                            $cost = round($shipper['price']['amount'] - $percentRate, 2);
+                                        }
+                                    } elseif ($delyvaxConfig['delyvax_rate_adjustment_form'] == RateAdjustmentForm::FLAT) {
+                                        if ($delyvaxConfig['delyvax_rate_adjustment_type'] == RateAdjustmentType::MARKUP) {
+                                            // Markup: cost = original_cost + adjustmentAmount
+                                            $cost = round($shipper['price']['amount'] + $adjustmentAmount, 2);
+                                        } else {
+                                            // Discount: cost = original_cost - adjustmentAmount
+                                            $cost = round($shipper['price']['amount'] - $adjustmentAmount, 2);
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
                     }
+
                     if ($cost < 0) { $cost = 0.00; }
                     $logo = null;
                     if (array_key_exists('serviceCompany', $shipper['service']) &&
@@ -179,6 +210,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
                     {
                         $logo = DelyvaxHelper::DELYVAX_CDN_URL . $shipper['service']['serviceCompany']['logo'];
                     }
+
                     $rate = [
                         'id' => $shipper['service']['code'],
                         'label' => $shipper['service']['name'],
@@ -186,7 +218,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
                         'logo'=> $logo,
                         'taxes' => 'false',
                         'calc_tax' => 'per_order',
-                                                'meta_data' => array(
+                        'meta_data' => array(
                             'service_code' => $shipper['service']['code'],
                         )
                     ];

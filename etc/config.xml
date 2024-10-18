@@ -19,6 +19,9 @@
                     <delyvax_source>magento</delyvax_source>
                     <delyvax_processing_time>11</delyvax_processing_time>
                 </settings>
+                <shipping_rate_adjustment>
+                    <delyvax_rate_adjustment_enabled>0</delyvax_rate_adjustment_enabled>
+                </shipping_rate_adjustment>
             </delyvax_shipment>
         </carriers>
     </default>

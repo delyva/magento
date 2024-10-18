@@ -130,7 +130,7 @@ class Data extends AbstractHelper
      * @var Cart
      */
     protected $_cart;
-    
+
     /**
      * Data constructor.
      * @param Context $context
@@ -242,9 +242,12 @@ class Data extends AbstractHelper
             'cancel_order_status' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'cancel_order_status'),
             'cancel_order_in_delvya' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'cancel_order_in_delvya'),
             'ship_order_with_delvya' => $this->scopeConfig->getValue(self::DELYVAX_SETTINGS_PATH . 'ship_order_with_delvya'),
-            'delyvax_rate_adjustment_flat' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_flat'),
-            'delyvax_rate_adjustment_percentage' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_percentage'),
-            'delyvax_rate_adjustment_type' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_type')
+            'delyvax_rate_adjustment_enabled' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_enabled'),
+            'delyvax_rate_adjustment_type' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_type'),
+            'delyvax_rate_adjustment_form' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_form'),
+            'delyvax_rate_adjustment_amount' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_amount'),
+            'delyvax_rate_adjustment_rule' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_rule'),
+            'delyvax_rate_adjustment_service_providers' => $this->scopeConfig->getValue(self::DELYVAX_RATE_PATH . 'delyvax_rate_adjustment_service_providers')
         ];
     }
 
@@ -734,4 +737,67 @@ class Data extends AbstractHelper
         return false;
     }
 
+    /**
+     * Create a shipment in Magento using the order object
+     * @param \Magento\Sales\Model\Order $order
+     * @param string $trackingNumber
+     * @throws LocalizedException
+     */
+    public function createOrUpdateShipment(\Magento\Sales\Model\Order $order, string $trackingNumber)
+    {
+        if (!$order->canShip()) {
+            // If shipment is already created, update the tracking number
+            $shipmentCollection = $order->getShipmentsCollection();
+            if ($shipmentCollection->getSize()) {
+                foreach ($shipmentCollection as $shipment) {
+                    $this->updateTrackingNumber($shipment, $trackingNumber);
+                }
+            } else {
+                throw new LocalizedException(__('Cannot create shipment for this order.'));
+            }
+        } else {
+            // Create a new shipment
+            $shipment = $this->_convertOrder->toShipment($order);
+            foreach ($order->getAllItems() as $orderItem) {
+                if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
+                    continue;
+                }
+                $qtyShipped = $orderItem->getQtyToShip();
+                $shipmentItem = $this->_convertOrder->itemToShipmentItem($orderItem)->setQty($qtyShipped);
+                $shipment->addItem($shipmentItem);
+            }
+            $shipment->register();
+            $shipment->getOrder()->setIsInProcess(true);
+
+            try {
+                $shipment->save();
+                $shipment->getOrder()->save();
+                $this->_shipmentNotifier->notify($shipment);
+                $this->updateTrackingNumber($shipment, $trackingNumber);
+            } catch (\Exception $e) {
+                throw new LocalizedException(__($e->getMessage()));
+            }
+        }
+    }
+
+    /**
+     * Update the tracking number for a shipment
+     * @param \Magento\Sales\Model\Order\Shipment $shipment
+     * @param string $trackingNumber
+     * @throws LocalizedException
+     */
+    private function updateTrackingNumber(\Magento\Sales\Model\Order\Shipment $shipment, string $trackingNumber)
+    {
+        $data = [
+            'carrier_code' => self::DELYVAX_SHIPMENT_CODE,
+            'title' => $shipment->getOrder()->getShippingDescription(),
+            'number' => $trackingNumber,
+        ];
+        try {
+            $track = $this->_trackFactory->create()->addData($data);
+            $shipment->addTrack($track)->save();
+        } catch (\Exception $e) {
+            throw new LocalizedException(__($e->getMessage()));
+        }
+    }
 }
