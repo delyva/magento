@@ -42,8 +42,8 @@ This configuration is to update the DelyvaX shipping rates on checkout page. Mag
 - **Adjustment Type:** Markup/Discount (to increase DelyvaX rates - select Markup, and to decrease DelyvaX rates - select Discount)
 - **Adjustment Form:** Percentage/Flat (select this form to apply rate adjustment in flat rate or percentage)
 - **Adjustment Amount:** Open text field that will accept a number - added number will be applied as rates adjustment on DelyvaX Shipping rates
-- **Rate Adjustment Rule:** Admin can add a [Cart price rule](https://prnt.sc/11mqbz3) in `Marketing > Promotions > Cart Price Rules` following this [example](https://prnt.sc/MwyQMx0anCo0) and Rate Adjustment will be applied only if conditions fulfill. If none is selected on this setting, Rate Adjustment will be applied straightaway on cart
-- **Service Providers:** Add '*' in this field to apply Rate Adjustment on all DelyvaX Shipping rates, or add comma-separated specific DelyvaX service provider's code `DHLEC-MY,GDEXMY-WM`
+- **Rate Adjustment Rule:** Admin can add a [Cart price rule](https://prnt.sc/yI15okzFbdmC) in `Marketing > Promotions > Cart Price Rules` following this [example](https://prnt.sc/MwyQMx0anCo0) and Rate Adjustment will be applied only if conditions fulfill. If none is selected on this setting, Rate Adjustment will be applied straightaway on cart
+- **Service Providers:** Add `'*'` in this field to apply Rate Adjustment on all DelyvaX Shipping rates, or add comma-separated specific DelyvaX service provider's code `DHLEC-MY,GDEXMY-WM`
 
 ### To update plugin as per the latest code
 Download/Clone latest code from repository and paste it in `magento_root/app/code/Delyvax/Shipment/` directory, then run the following commands in Magento 2 root directory:
