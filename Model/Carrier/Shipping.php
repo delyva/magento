@@ -3,8 +3,11 @@ namespace Delyvax\Shipment\Model\Carrier;
 
 use Delyvax\Shipment\Model\Config\Source\RateAdjustmentForm;
 use Delyvax\Shipment\Model\Config\Source\RateAdjustmentType;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Xml\Security;
+use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address\RateRequest;
+use Magento\SalesRule\Model\RuleFactory;
 use Magento\Shipping\Model\Rate\Result;
 use Delyvax\Shipment\Helper\Data as DelyvaxHelper;
 
@@ -15,6 +18,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
      * @var string
      */
     protected $_code = 'delyvax_shipment';
+
     /**
      * Shipping constructor.
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
@@ -37,27 +41,30 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
      * @param array $data
      */
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory,
-        \Psr\Log\LoggerInterface $logger,
-        Security $xmlSecurity,
-        \Magento\Shipping\Model\Simplexml\ElementFactory $xmlElFactory,
-        \Magento\Shipping\Model\Rate\ResultFactory $rateFactory,
+        \Magento\Framework\App\Config\ScopeConfigInterface          $scopeConfig,
+        \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory  $rateErrorFactory,
+        \Psr\Log\LoggerInterface                                    $logger,
+        Security                                                    $xmlSecurity,
+        \Magento\Shipping\Model\Simplexml\ElementFactory            $xmlElFactory,
+        \Magento\Shipping\Model\Rate\ResultFactory                  $rateFactory,
         \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory,
-        \Magento\Shipping\Model\Tracking\ResultFactory $trackFactory,
-        \Magento\Shipping\Model\Tracking\Result\ErrorFactory $trackErrorFactory,
-        \Magento\Shipping\Model\Tracking\Result\StatusFactory $trackStatusFactory,
-        \Magento\Directory\Model\RegionFactory $regionFactory,
-        \Magento\Directory\Model\CountryFactory $countryFactory,
-        \Magento\Directory\Model\CurrencyFactory $currencyFactory,
-        \Magento\Directory\Helper\Data $directoryData,
-        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
-        DelyvaxHelper $delyvaxHelper,
-        \Magento\Customer\Model\Session $customerSession,
-        array $data = []
-    ) {
+        \Magento\Shipping\Model\Tracking\ResultFactory              $trackFactory,
+        \Magento\Shipping\Model\Tracking\Result\ErrorFactory        $trackErrorFactory,
+        \Magento\Shipping\Model\Tracking\Result\StatusFactory       $trackStatusFactory,
+        \Magento\Directory\Model\RegionFactory                      $regionFactory,
+        \Magento\Directory\Model\CountryFactory                     $countryFactory,
+        \Magento\Directory\Model\CurrencyFactory                    $currencyFactory,
+        \Magento\Directory\Helper\Data                              $directoryData,
+        \Magento\CatalogInventory\Api\StockRegistryInterface        $stockRegistry,
+        DelyvaxHelper                                               $delyvaxHelper,
+        \Magento\Customer\Model\Session                             $customerSession,
+        RuleFactory                                                 $ruleFactory,
+        array                                                       $data = []
+    )
+    {
         $this->_delyvaxHelper = $delyvaxHelper;
         $this->customerSession = $customerSession;
+        $this->rule = $ruleFactory;
         parent::__construct(
             $scopeConfig,
             $rateErrorFactory,
@@ -88,6 +95,8 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
      */
     protected $customerSession;
 
+    protected $rule;
+
     /**
      * get allowed methods
      * @return array
@@ -100,7 +109,8 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     /**
      * @return Result
      */
-    public function getDelyvaxFlatShippingMethod() {
+    public function getDelyvaxFlatShippingMethod()
+    {
         $result = $this->_rateFactory->create();
         $method = $this->_rateMethodFactory->create();
         $method->setCarrier($this->_code);
@@ -113,6 +123,33 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         $result->append($method);
         return $result;
     }
+
+    function isQuoteMatchingRule(Quote $quote)
+    {
+        $ruleId = $this->_delyvaxHelper->getDelyvaxConfig()["delyvax_rate_adjustment_rule"];
+        $rule = $this->rule->create()->load($ruleId);
+
+        if (!$rule->getId()) {
+            throw new \Exception("Rule with ID $ruleId does not exist.");
+        }
+
+        // Validate cart-level conditions
+        if (!$rule->getConditions()->validate($quote)) {
+            return false;
+        }
+
+        // Validate item-level conditions
+        foreach ($quote->getAllItems() as $item) {
+            if (!$rule->getActions()->validate($item)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+
 
     /**
      * @param RateRequest $request
@@ -140,9 +177,9 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         }
 
         $destination = [
-            "address1" => (string) $st1,
-            "address2" => (string) $st2,
-            "city" => (string) $request->getDestCity(),
+            "address1" => (string)$st1,
+            "address2" => (string)$st2,
+            "city" => (string)$request->getDestCity(),
             "state" => ($request->getDestRegionId()) ? $this->_delyvaxHelper->getStateById($request->getDestRegionId()) : $request->getDestRegionCode(),
             "postcode" => $request->getDestPostcode(),
             "country" => $request->getDestCountryId()
@@ -173,9 +210,8 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
                         $allowedShippers = explode(',', $delyvaxConfig['delyvax_rate_adjustment_service_providers']);
 
                         if (in_array($shipperCode, $allowedShippers) || in_array('*', $allowedShippers)) {
-                            foreach ($items as $item) {
-                                $appliedRules = explode(',', $item->getAppliedRuleIds());
-                                if (is_null($ruleId) || in_array($ruleId, $appliedRules)) {;
+                            if (is_null($ruleId) || $this->isQuoteMatchingRule($items[0]->getQuote())) {
+                                foreach ($items as $item) {
                                     $adjustmentAmount = $delyvaxConfig['delyvax_rate_adjustment_amount'] ?? 0;
 
                                     if ($delyvaxConfig['delyvax_rate_adjustment_form'] == RateAdjustmentForm::PERCENTAGE) {
@@ -202,12 +238,13 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
                         }
                     }
 
-                    if ($cost < 0) { $cost = 0.00; }
+                    if ($cost < 0) {
+                        $cost = 0.00;
+                    }
                     $logo = null;
                     if (array_key_exists('serviceCompany', $shipper['service']) &&
                         array_key_exists('logo', $shipper['service']['serviceCompany']) &&
-                        $shipper['service']['serviceCompany']['logo'])
-                    {
+                        $shipper['service']['serviceCompany']['logo']) {
                         $logo = DelyvaxHelper::DELYVAX_CDN_URL . $shipper['service']['serviceCompany']['logo'];
                     }
 
@@ -215,7 +252,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
                         'id' => $shipper['service']['code'],
                         'label' => $shipper['service']['name'],
                         'cost' => $cost,
-                        'logo'=> $logo,
+                        'logo' => $logo,
                         'taxes' => 'false',
                         'calc_tax' => 'per_order',
                         'meta_data' => array(
@@ -241,7 +278,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
      * @param $rate array
      * @return \Magento\Quote\Model\Quote\Address\RateResult\Method
      */
-    protected function _createShippingMethod (array $rate): \Magento\Quote\Model\Quote\Address\RateResult\Method
+    protected function _createShippingMethod(array $rate): \Magento\Quote\Model\Quote\Address\RateResult\Method
     {
         /** @var \Magento\Quote\Model\Quote\Address\RateResult\Method $method */
         $method = $this->_rateMethodFactory->create();
@@ -315,7 +352,8 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         return true;
     }
 
-    public function proccessAdditionalValidation(\Magento\Framework\DataObject $request) {
+    public function proccessAdditionalValidation(\Magento\Framework\DataObject $request)
+    {
         return true;
     }
 }
